@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حالة التحديث - KoraLegend</title>
+    <style>
+        body {
+            font-family: 'Cairo', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #1b75f0, #00d4ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .status {
+            font-size: 1.2rem;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(74, 222, 128, 0.1);
+            border: 2px solid #4ade80;
+            border-radius: 10px;
+        }
+        .timestamp {
+            font-size: 1.5rem;
+            color: #4ade80;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .info {
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            text-align: right;
+        }
+        .info-item {
+            margin: 15px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .label {
+            color: #a8b2d1;
+        }
+        .value {
+            color: #1b75f0;
+            font-weight: bold;
+        }
+        .button {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #1b75f0, #00d4ff);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            margin: 10px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        .button:hover {
+            transform: translateY(-2px);
+        }
+        .pulse {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            margin-left: 10px;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.3); }
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <h1>⚽ KoraLegend</h1>
+        
+        <div class="status">
+            <span class="pulse"></span>
+            <div>البيانات محدّثة</div>
+            <div class="timestamp" id="lastUpdate">جاري التحميل...</div>
+        </div>
+
+        <div class="info">
+            <div class="info-item">
+                <span class="label">عدد المباريات (اليوم):</span>
+                <span class="value" id="todayCount">-</span>
+            </div>
+            <div class="info-item">
+                <span class="label">عدد المباريات (أمس):</span>
+                <span class="value" id="yesterdayCount">-</span>
+            </div>
+            <div class="info-item">
+                <span class="label">عدد المباريات (غداً):</span>
+                <span class="value" id="tomorrowCount">-</span>
+            </div>
+            <div class="info-item">
+                <span class="label">المباريات الجارية:</span>
+                <span class="value" id="liveCount" style="color: #ff6b6b;">-</span>
+            </div>
+        </div>
+
+        <a href="matches" class="button">🎯 شاهد المباريات</a>
+        <a href="RUN-ME.md" class="button" style="background: linear-gradient(135deg, #ff5100, #ff8c00);">📖 دليل التشغيل</a>
+    </main>
+
+    <script src="script.js?v=2.1" defer></script>
+    <script src="matches-data.js"></script>
+    <script>
+        // Display last update time
+        const updateComment = document.querySelector('script[src="matches-data.js"]').textContent;
+        const match = updateComment.match(/Last updated: (.+)/);
+        if (match) {
+            const date = new Date(match[1]);
+            document.getElementById('lastUpdate').textContent = date.toLocaleString('ar-EG', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        // Count matches
+        if (typeof matchesDatabase !== 'undefined') {
+            const today = matchesDatabase.ar.today || [];
+            const yesterday = matchesDatabase.ar.yesterday || [];
+            const tomorrow = matchesDatabase.ar.tomorrow || [];
+            
+            document.getElementById('todayCount').textContent = today.length;
+            document.getElementById('yesterdayCount').textContent = yesterday.length;
+            document.getElementById('tomorrowCount').textContent = tomorrow.length;
+            
+            const liveCount = today.filter(m => m.isLive).length;
+            document.getElementById('liveCount').textContent = liveCount + ' 🔴';
+        }
+
+        // Auto refresh every 60 seconds
+        setTimeout(() => location.reload(), 60000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-adsense-account" content="ca-pub-8486549501295296">
+    <title>مباريات كرة القدم اليوم - نتائج مباشرة | Kora Legend كورة ليجند</title>
+    <!-- Performance: preconnect to external origins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.ssref.net">
+    <link rel="dns-prefetch" href="https://crests.football-data.org">
+    <link rel="canonical" href="https://koralegend.com/matches">
+    <meta name="description" content="Kora Legend - موقع كورة ليجند الرياضي. البديل الأفضل لمواقع يلا شوت (Yalla Shoot) وكووورة (Kooora) لمتابعة المباريات المباشرة والنتائج.">
+    <meta name="keywords" content="kora legend, korra legend, كورة ليجند, يلا شوت, كووورة, kooora, yalla shoot, في الجول, filgoal, كورة لايف, kora live, يلا كورة, yallakora, 365scores, بطولات, مباريات اليوم بث مباشر, كورة 365, بث مباشر مباريات">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="كورة ليجند">
+    <meta name="language" content="Arabic">
+    <!-- Open Graph -->
+    <meta property="og:title" content="Kora Legend - مباريات كرة القدم اليوم">
+    <meta property="og:description" content="Kora Legend | نتائج مباشرة لمباريات كرة القدم اليوم من جميع الدوريات العالمية والعربية">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ar_AR">
+    <meta property="og:image" content="logo.png">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Kora Legend - مباريات كرة القدم اليوم">
+    <meta name="twitter:description" content="Kora Legend | نتائج مباشرة لمباريات كرة القدم اليوم">
+    <link rel="stylesheet" href="styles.min.css?v=2.1">
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8486549501295296" crossorigin="anonymous"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <div class="container">
+            <div class="header-content">
+                <a href="matches" class="logo" style="text-decoration: none; color: inherit;">
+                    <picture><source srcset="logo.webp" type="image/webp"><img src="logo.png" alt="Football World" class="logo-img" width="55" height="55"></picture>
+                    <h1 class="logo-text">KORA LEGEND</h1>
+                </a>
+                
+                <button class="menu-toggle" id="menuToggle" aria-label="Toggle Menu">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </button>
+                
+                <nav class="main-nav">
+                    <ul>
+                        <li><a href="matches" class="nav-link active" data-en="Matches" data-ar="المباريات">المباريات</a></li>
+                        <li><a href="news" class="nav-link" data-en="News" data-ar="الأخبار">الأخبار</a></li>
+
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Page Header -->
+        <section class="page-header">
+            <div class="container">
+                <h1 class="page-title" data-en="Football Matches" data-ar="مباريات كرة القدم">مباريات كرة القدم</h1>
+                <p class="page-subtitle" data-en="Stay updated with live scores and schedules" data-ar="ابق على اطلاع بالنتائج المباشرة والجداول">ابق على اطلاع بالنتائج المباشرة والجداول</p>
+                <!-- Auto-refresh indicator -->
+                <div id="autoRefreshIndicator" style="margin-top: 10px; font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span style="display: inline-block; width: 8px; height: 8px; background: #4ade80; border-radius: 50%; animation: pulse 2s infinite;"></span>
+                    <span>جاري الاتصال...</span>
+                </div>
+            </div>
+        </section>
+        <style>
+            @keyframes pulse {
+                0%, 100% { opacity: 1; transform: scale(1); }
+                50% { opacity: 0.5; transform: scale(1.2); }
+            }
+        </style>
+        <!-- Date Picker + Filters -->
+        <section class="date-picker-section">
+            <div class="container">
+                <!-- Date Strip Removed -->
+
+                <!-- Status + League Filters -->
+                <div class="match-filters-row">
+                    <div class="status-filter-group">
+                        <button class="status-filter-btn active" data-status="all">الكل</button>
+                        <button class="status-filter-btn" data-status="live" id="liveFilterBtn">مباشر</button>
+                    </div>
+                    <select id="leagueFilter" class="filter-select-inline">
+                        <option value="all">كل الدوريات</option>
+                        <option value="premier">الدوري الإنجليزي</option>
+                        <option value="laliga">الدوري الإسباني</option>
+                        <option value="seriea">الدوري الإيطالي</option>
+                        <option value="bundesliga">الدوري الألماني</option>
+                        <option value="ligue1">الدوري الفرنسي</option>
+                        <option value="egyptian">الدوري المصري</option>
+                        <option value="spl">الدوري السعودي</option>
+                        <option value="ucl">دوري الأبطال</option>
+                        <option value="worldcup">كأس العالم</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Ad Unit: Under Filters -->
+        <div class="container">
+            <div class="ad-container ad-horizontal">
+                <span class="ad-label">إعلان</span>
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-8486549501295296"
+                     data-ad-slot="YYYYYYYYYY"
+                     data-ad-format="auto"
+                     data-full-width-responsive="true"></ins>
+                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+            </div>
+        </div>
+
+        <!-- Matches Display -->
+        <section class="matches-display">
+            <div class="container">
+                <div class="matches-list" id="matchesList">
+                    <!-- Matches will be populated by JavaScript -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <picture><source srcset="logo.webp" type="image/webp"><img src="logo.png" alt="Football World" class="footer-logo-img" width="40" height="40"></picture>
+                    <p>KORA LEGEND</p>
+                </div>
+                <p class="footer-text" data-en="© YEAR FARES. All rights reserved." data-ar="© YEAR FARES. جميع الحقوق محفوظة.">© 2026 FARES. جميع الحقوق محفوظة.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js?v=2.1" defer></script>
+    <script src="live-matches.js?v=2.1" defer></script>
+    <style>
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+    <!-- Structured Data for Google -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Kora Legend",
+      "alternateName": ["كورة ليجند", "Korra Legend", "KoraLegend"],
+      "url": "https://koralegend.com",
+      "description": "Kora Legend - نتائج مباريات كرة القدم المباشرة من جميع الدوريات",
+      "inLanguage": "ar",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://koralegend.com/matches?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+
+    <!-- Scroll to Top Button -->
+    <button id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="
+        display:none;
+        position:fixed;
+        bottom:28px;
+        left:28px;
+        width:44px;
+        height:44px;
+        border-radius:50%;
+        background:var(--gradient-1);
+        border:none;
+        cursor:pointer;
+        box-shadow:0 4px 15px rgba(27,117,240,0.5);
+        font-size:1.2rem;
+        color:#fff;
+        z-index:999;
+        transition:opacity 0.3s,transform 0.3s;
+        align-items:center;
+        justify-content:center;
+    " aria-label="العودة للأعلى">↑</button>
+    <script>
+        const scrollBtn = document.getElementById('scrollTopBtn');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                scrollBtn.style.display = 'flex';
+            } else {
+                scrollBtn.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

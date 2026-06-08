@@ -1,0 +1,21 @@
+{
+  "name": "koralegend",
+  "version": "1.0.0",
+  "description": "Kora Legend - Live Football Scores",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "scrape": "node scraper.js",
+    "bot": "node scraper.js --daemon",
+    "bot:5": "node scraper.js --daemon --interval=5"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.17.0",
+    "cheerio": "^1.2.0",
+    "web-push": "^3.6.7"
+  }
+}

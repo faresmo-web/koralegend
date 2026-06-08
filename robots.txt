@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /node_modules/
+Disallow: /scratch/
+
+Sitemap: https://koralegend.com/sitemap.xml

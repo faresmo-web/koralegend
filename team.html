@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-adsense-account" content="ca-pub-8486549501295296">
+    <title>تفاصيل الفريق - كورة ليجند</title>
+    <meta name="description" content="تعرف على تفاصيل الفريق، إحصائياته، تشكيلته، وأحدث أخباره على موقع كورة ليجند Kora Legend بديل كووورة.">
+    <meta name="keywords" content="kora legend, korra legend, كورة ليجند, كووورة, kooora, يلا شوت, yalla shoot, في الجول, تفاصيل الفريق, اخبار الفريق">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="كورة ليجند">
+    <link rel="canonical" href="https://koralegend.com/team">
+    <!-- Open Graph -->
+    <meta property="og:title" content="تفاصيل الفريق - كورة ليجند">
+    <meta property="og:description" content="تعرف على تفاصيل الفريق، إحصائياته، تشكيلته، وأحدث أخباره على موقع كورة ليجند Kora Legend.">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ar_AR">
+    <meta property="og:image" content="https://koralegend.com/logo.png">
+    <meta property="og:site_name" content="Kora Legend">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="تفاصيل الفريق - كورة ليجند">
+    <meta name="twitter:description" content="تعرف على تفاصيل الفريق، إحصائياته، تشكيلته، وأحدث أخباره على موقع كورة ليجند.">
+    <meta name="twitter:image" content="https://koralegend.com/logo.png">
+    <link rel="stylesheet" href="styles.min.css?v=2.1">
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8486549501295296" crossorigin="anonymous"></script>
+    <style>
+        .team-page { max-width: 1000px; margin: 0 auto; padding: var(--spacing-xl) 0; }
+
+        /* Hero Card */
+        .team-hero {
+            background: linear-gradient(135deg, rgba(13,20,44,0.9) 0%, rgba(6,9,25,0.97) 100%);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: var(--spacing-lg);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            gap: var(--spacing-lg);
+            align-items: center;
+        }
+        .team-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 4px;
+            background: var(--gradient-1);
+        }
+        .team-hero-img-wrap {
+            flex-shrink: 0;
+            background: rgba(255,255,255,0.03);
+            border-radius: 20px;
+            padding: var(--spacing-sm);
+            border: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .team-hero-img {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.4));
+        }
+        .team-hero-info { flex: 1; }
+        .team-hero-name {
+            font-size: 2.2rem;
+            font-weight: 900;
+            margin-bottom: 6px;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .team-hero-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .team-meta-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 5px 14px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        /* Tabs Navigation */
+        .team-tabs {
+            display: flex;
+            background: rgba(13,20,44,0.5);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 6px;
+            margin-bottom: var(--spacing-lg);
+            backdrop-filter: blur(10px);
+            overflow-x: auto;
+            scrollbar-width: none; /* Firefox */
+        }
+        .team-tabs::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+        .team-tab-btn {
+            flex: 1;
+            min-width: 100px;
+            padding: 12px 8px;
+            background: transparent;
+            border: none;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .team-tab-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.02);
+        }
+        .team-tab-btn.active {
+            color: var(--text-primary);
+            background: var(--gradient-1);
+            box-shadow: 0 4px 15px rgba(27,117,240,0.3);
+        }
+
+        /* Content Panels */
+        .team-panel {
+            display: none;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        .team-panel.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Squad section styling */
+        .squad-section { margin-bottom: 2rem; }
+        .squad-pos-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 1.5rem 0 1rem;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .squad-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 15px;
+        }
+        .player-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: var(--spacing-sm);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .player-card:hover {
+            border-color: rgba(0, 102, 255, 0.4);
+            transform: translateY(-3px);
+            background: var(--card-hover-bg);
+            box-shadow: var(--shadow-md), 0 0 15px rgba(0,102,255,0.15);
+        }
+        .player-card-img {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .player-card-info { flex: 1; min-width: 0; }
+        .player-card-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-primary);
+        }
+        .player-card-meta {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* Info Tab Styling */
+        .info-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+        }
+        .info-block {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: var(--spacing-md);
+            text-align: center;
+        }
+        .info-block-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .info-block-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* Loading indicator styling */
+        .team-loading {
+            text-align: center;
+            padding: 4rem;
+            color: var(--text-secondary);
+        }
+        .team-loading .spin {
+            font-size: 3rem;
+            display: inline-block;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Scroll to Top button */
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.6rem 1.2rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            margin-bottom: var(--spacing-md);
+            cursor: pointer;
+        }
+        .btn-back:hover {
+            background: var(--gradient-1);
+            border-color: transparent;
+            box-shadow: 0 0 15px rgba(27,117,240,0.3);
+        }
+
+        @media (max-width: 768px) {
+            .team-hero { flex-direction: column; text-align: center; }
+            .team-hero-img-wrap { width: fit-content; margin: 0 auto; }
+            .team-hero-meta { justify-content: center; }
+            .squad-grid { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 480px) {
+            .squad-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <div class="container">
+            <div class="header-content">
+                <a href="matches" class="logo" style="text-decoration:none;color:inherit;">
+                    <picture><source srcset="logo.webp" type="image/webp"><img src="logo.png" alt="Kora Legend" class="logo-img" width="55" height="55"></picture>
+                    <h1 class="logo-text">KORA LEGEND</h1>
+                </a>
+                <button class="menu-toggle" id="menuToggle"><span class="bar"></span><span class="bar"></span><span class="bar"></span></button>
+                <nav class="main-nav">
+                    <ul>
+                        <li><a href="matches" class="nav-link">المباريات</a></li>
+                        <li><a href="news" class="nav-link">الأخبار</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <div class="team-page">
+            <button class="btn-back" onclick="history.back()">← رجوع</button>
+
+            <!-- Hero Section -->
+            <div id="teamHeroContainer">
+                <div class="team-loading">
+                    <div class="spin">⚽</div>
+                    <p>جاري تحميل بيانات الفريق...</p>
+                </div>
+            </div>
+
+            <!-- Ad Unit: Under Hero -->
+            <div class="ad-container ad-horizontal">
+                <span class="ad-label">إعلان</span>
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-8486549501295296"
+                     data-ad-slot="YYYYYYYYYY"
+                     data-ad-format="auto"
+                     data-full-width-responsive="true"></ins>
+                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+            </div>
+
+            <!-- Tabs -->
+            <div class="team-tabs">
+                <button class="team-tab-btn active" data-tab="info">ℹ️ معلومات</button>
+                <button class="team-tab-btn" data-tab="news">📰 الأخبار</button>
+                <button class="team-tab-btn" data-tab="videos">🎥 فيديوهات</button>
+                <button class="team-tab-btn" data-tab="matches">📅 المباريات</button>
+                <button class="team-tab-btn" data-tab="squad">👥 قائمة اللاعبين</button>
+                <button class="team-tab-btn" data-tab="standings">📊 ترتيب</button>
+                <button class="team-tab-btn" data-tab="scorers">🏆 أفضل اللاعبين</button>
+            </div>
+
+            <!-- Content Panels -->
+            <div id="teamContentContainer">
+                <!-- Tab: Info -->
+                <div id="panel-info" class="team-panel active">
+                    <div class="team-loading"><div class="spin">⚽</div></div>
+                </div>
+
+                <!-- Tab: News -->
+                <div id="panel-news" class="team-panel">
+                    <div class="team-loading"><div class="spin">⚽</div></div>
+                </div>
+
+                <!-- Tab: Videos -->
+                <div id="panel-videos" class="team-panel">
+                    <div class="team-loading"><div class="spin">⚽</div></div>
+                </div>
+
+                <!-- Tab: Matches -->
+                <div id="panel-matches" class="team-panel">
+                    <div class="team-loading"><div class="spin">⚽</div></div>
+                </div>
+
+                <!-- Tab: Squad -->
+                <div id="panel-squad" class="team-panel">
+                    <div class="team-loading"><div class="spin">⚽</div></div>
+                </div>
+
+                <!-- Tab: Standings -->
+                <div id="panel-standings" class="team-panel">
+                    <div class="team-loading"><div class="spin">⚽</div></div>
+                </div>
+
+                <!-- Tab: Scorers -->
+                <div id="panel-scorers" class="team-panel">
+                    <div class="team-loading"><div class="spin">⚽</div></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <picture><source srcset="logo.webp" type="image/webp"><img src="logo.png" alt="Kora Legend" class="footer-logo-img" width="40" height="40"></picture>
+                    <p>KORA LEGEND</p>
+                </div>
+                <p class="footer-text">© 2026 FARES. جميع الحقوق محفوظة.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="script.js?v=2.1" defer></script>
+    <script src="team.js?v=2.2" defer></script>
+</body>
+</html>

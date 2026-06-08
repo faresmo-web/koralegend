@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-adsense-account" content="ca-pub-8486549501295296">
+    <title>ملف اللاعب - كورة ليجند</title>
+    <meta name="description" content="إحصائيات ومعلومات ومع مسيرة اللاعبين على كورة ليجند Kora Legend بديل موقع كووورة. تابع أرقام وبطولات نجمك المفضل.">
+    <meta name="keywords" content="kora legend, korra legend, كورة ليجند, كووورة, kooora, في الجول, filgoal, ملف اللاعب, احصائيات اللاعب, مسيرة اللاعب, اهداف اللاعب">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="كورة ليجند">
+    <link rel="canonical" href="https://koralegend.com/player">
+    <!-- Open Graph -->
+    <meta property="og:title" content="ملف اللاعب - كورة ليجند">
+    <meta property="og:description" content="إحصائيات ومعلومات ومع مسيرة اللاعبين على كورة ليجند Kora Legend.">
+    <meta property="og:type" content="profile">
+    <meta property="og:locale" content="ar_AR">
+    <meta property="og:image" content="https://koralegend.com/logo.png">
+    <meta property="og:site_name" content="Kora Legend">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="ملف اللاعب - كورة ليجند">
+    <meta name="twitter:description" content="إحصائيات ومعلومات ومسيرة اللاعبين على كورة ليجند Kora Legend.">
+    <meta name="twitter:image" content="https://koralegend.com/logo.png">
+    <link rel="stylesheet" href="styles.min.css?v=2.1">
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8486549501295296" crossorigin="anonymous"></script>
+    <style>
+        .player-page { max-width: 900px; margin: 0 auto; padding: var(--spacing-xl) 0; }
+
+        /* Hero Card */
+        .player-hero {
+            background: linear-gradient(135deg, rgba(13,20,44,0.9) 0%, rgba(6,9,25,0.97) 100%);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: var(--spacing-lg);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            gap: var(--spacing-lg);
+            align-items: center;
+        }
+        .player-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 4px;
+            background: var(--gradient-1);
+        }
+        .player-hero-img-wrap {
+            flex-shrink: 0;
+            position: relative;
+        }
+        .player-hero-img {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--primary-color);
+            box-shadow: 0 0 30px rgba(27,117,240,0.4);
+            background: rgba(255,255,255,0.05);
+        }
+        .player-shirt-badge {
+            position: absolute;
+            bottom: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary-color);
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 0.85rem;
+            padding: 2px 10px;
+            border-radius: 12px;
+            white-space: nowrap;
+        }
+        .player-hero-info { flex: 1; }
+        .player-hero-name {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+        .player-hero-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: var(--spacing-md);
+        }
+        .player-meta-pill { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 4px 12px; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); }
+        .player-meta-pill.team-link { cursor: pointer; transition: all 0.25s ease; text-decoration: none; color: var(--text-secondary); }
+        .player-meta-pill.team-link:hover { background: rgba(27,117,240,0.15); border-color: rgba(27,117,240,0.4); color: var(--primary-color); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(27,117,240,0.2); }
+        .player-meta-pill img { width: 18px; height: 18px; object-fit: contain; border-radius: 2px; }
+        .player-position-badge {
+            display: inline-block;
+            background: rgba(27,117,240,0.15);
+            border: 1px solid rgba(27,117,240,0.4);
+            color: var(--primary-color);
+            border-radius: 20px;
+            padding: 5px 16px;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+        .player-bio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+        .bio-item { text-align: center; }
+        .bio-label { font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .bio-value { font-size: 0.95rem; font-weight: 700; color: var(--text-primary); }
+
+        /* Stats Table */
+        .stats-section {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .stats-section-title {
+            padding: var(--spacing-md) var(--spacing-lg);
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .stats-table { width: 100%; border-collapse: collapse; }
+        .stats-table th {
+            padding: 10px 14px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            text-align: center;
+        }
+        .stats-table th:first-child { text-align: right; }
+        .stats-table td {
+            padding: 12px 14px;
+            font-size: 0.9rem;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            text-align: center;
+            color: var(--text-primary);
+        }
+        .stats-table td:first-child { text-align: right; }
+        .stats-table tr:last-child td { border-bottom: none; }
+        .stats-table tr:hover td { background: rgba(255,255,255,0.02); }
+        .stats-table .season-label { font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px; }
+        .stats-table .comp-name { font-weight: 600; }
+        .stats-table .team-logo-sm { width: 20px; height: 20px; object-fit: contain; vertical-align: middle; margin-left: 6px; }
+        .stat-highlight { color: var(--primary-color); font-weight: 700; }
+        .stat-zero { color: rgba(255,255,255,0.25); }
+
+        /* Loading */
+        .player-loading {
+            text-align: center;
+            padding: 4rem;
+            color: var(--text-secondary);
+        }
+        .player-loading .spin {
+            font-size: 3rem;
+            display: inline-block;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Back button */
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.6rem 1.2rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            margin-bottom: var(--spacing-md);
+            cursor: pointer;
+        }
+        .btn-back:hover { background: var(--gradient-1); border-color: transparent; }
+
+        @media (max-width: 600px) {
+            .player-hero { flex-direction: column; align-items: center; text-align: center; }
+            .player-hero-meta { justify-content: center; }
+            .player-bio-grid { grid-template-columns: repeat(2, 1fr); }
+            .stats-table th, .stats-table td { padding: 8px 8px; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <div class="container">
+            <div class="header-content">
+                <a href="matches" class="logo" style="text-decoration:none;color:inherit;">
+                    <picture><source srcset="logo.webp" type="image/webp"><img src="logo.png" alt="Kora Legend" class="logo-img" width="55" height="55"></picture>
+                    <h1 class="logo-text">KORA LEGEND</h1>
+                </a>
+                <button class="menu-toggle" id="menuToggle"><span class="bar"></span><span class="bar"></span><span class="bar"></span></button>
+                <nav class="main-nav">
+                    <ul>
+                        <li><a href="matches" class="nav-link">المباريات</a></li>
+                        <li><a href="news" class="nav-link">الأخبار</a></li>
+
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="player-page">
+            <button class="btn-back" onclick="history.back()">← رجوع</button>
+            <div id="playerContent">
+                <div class="player-loading">
+                    <div class="spin">⚽</div>
+                    <p>جاري تحميل بيانات اللاعب...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <picture><source srcset="logo.webp" type="image/webp"><img src="logo.png" alt="Kora Legend" class="footer-logo-img" width="40" height="40"></picture>
+                    <p>KORA LEGEND</p>
+                </div>
+                <p class="footer-text" data-en="© YEAR FARES. All rights reserved." data-ar="© YEAR FARES. جميع الحقوق محفوظة.">© 2026 FARES. جميع الحقوق محفوظة.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js?v=2.1" defer></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Mobile menu
+        const menuToggle = document.getElementById('menuToggle');
+        const mainNav    = document.querySelector('.main-nav');
+        if (menuToggle && mainNav) {
+            menuToggle.addEventListener('click', e => { e.stopPropagation(); menuToggle.classList.toggle('active'); mainNav.classList.toggle('active'); });
+        }
+
+        const params   = new URLSearchParams(window.location.search);
+        const playerId = params.get('id')   || '';
+        const name     = params.get('name') || '';
+
+        if (!playerId) {
+            document.getElementById('playerContent').innerHTML = '<p style="text-align:center;color:#ff6b6b;padding:3rem;">معرّف اللاعب غير صحيح</p>';
+            return;
+        }
+
+        try {
+            const res    = await fetch(`/api/player?id=${encodeURIComponent(playerId)}&name=${encodeURIComponent(name)}`, { cache: 'no-store' });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const player = await res.json();
+            renderPlayer(player);
+            
+            // Hide page loading indicator
+            if (typeof hidePageLoading === 'function') {
+                hidePageLoading();
+            }
+        } catch (e) {
+            document.getElementById('playerContent').innerHTML = `<p style="text-align:center;color:#ff6b6b;padding:3rem;">تعذّر تحميل بيانات اللاعب: ${e.message}</p>`;
+            
+            // Hide page loading indicator
+            if (typeof hidePageLoading === 'function') {
+                hidePageLoading();
+            }
+        }
+    });
+
+    function renderPlayer(p) {
+        const posColor = {
+            'حارس مرمى': '#f59e0b',
+            'مدافع':     '#3b82f6',
+            'لاعب وسط':  '#10b981',
+            'مهاجم':     '#ef4444',
+        };
+        const color = posColor[p.position] || 'var(--primary-color)';
+
+        const imgHtml = p.image
+            ? `<img src="${p.image}" alt="${p.name}" class="player-hero-img" onerror="this.src='';this.style.background='rgba(255,255,255,0.1)';this.style.display='flex';" loading="lazy">`
+            : `<div class="player-hero-img" style="display:flex;align-items:center;justify-content:center;font-size:3rem;">👤</div>`;
+
+        const flagHtml = p.nationalityFlag
+            ? `<img src="${p.nationalityFlag}" alt="${p.nationality}" loading="lazy">`
+            : '🌍';
+
+        const teamLogoHtml = p.teamLogo
+            ? `<img src="${p.teamLogo}" alt="${p.team}" style="width:18px;height:18px;object-fit:contain;" loading="lazy">`
+            : '🏟️';
+
+        // Stats table
+        const statsHtml = p.stats.length === 0
+            ? `<div style="text-align:center;padding:2rem;color:var(--text-secondary);">لا توجد إحصائيات متوفرة</div>`
+            : `<table class="stats-table">
+                <thead>
+                    <tr>
+                        <th>البطولة</th>
+                        <th>الموسم</th>
+                        <th>م</th>
+                        <th>أهداف</th>
+                        <th>تمريرات</th>
+                        <th>🟨</th>
+                        <th>🟥</th>
+                        <th>دقائق</th>
+                        ${p.stats.some(s => s.cleanSheets !== null) ? '<th>شباك نظيفة</th>' : ''}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${p.stats.map(s => `
+                        <tr>
+                            <td>
+                                ${s.teamLogo ? `<img src="${s.teamLogo}" class="team-logo-sm" onerror="this.style.display='none';" loading="lazy">` : ''}
+                                <span class="comp-name">${s.competition}</span>
+                            </td>
+                            <td><span class="season-label">${s.season}</span></td>
+                            <td class="${s.appearances > 0 ? 'stat-highlight' : 'stat-zero'}">${s.appearances}</td>
+                            <td class="${s.goals > 0 ? 'stat-highlight' : 'stat-zero'}">${s.goals}</td>
+                            <td class="${s.assists > 0 ? 'stat-highlight' : 'stat-zero'}">${s.assists}</td>
+                            <td class="${s.yellowCards > 0 ? '' : 'stat-zero'}" style="${s.yellowCards > 0 ? 'color:#f59e0b;font-weight:700;' : ''}">${s.yellowCards}</td>
+                            <td class="${s.redCards > 0 ? '' : 'stat-zero'}" style="${s.redCards > 0 ? 'color:#ef4444;font-weight:700;' : ''}">${s.redCards}</td>
+                            <td class="stat-zero" style="font-size:0.8rem;">${s.minutesPlayed}'</td>
+                            ${p.stats.some(s2 => s2.cleanSheets !== null) ? `<td class="${s.cleanSheets > 0 ? 'stat-highlight' : 'stat-zero'}">${s.cleanSheets ?? '-'}</td>` : ''}
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>`;
+
+        document.title = `${p.name} - كورة ليجند`;
+
+        document.getElementById('playerContent').innerHTML = `
+            <!-- Hero -->
+            <div class="player-hero">
+                <div class="player-hero-img-wrap">
+                    ${imgHtml}
+                    ${p.shirtNumber ? `<div class="player-shirt-badge">#${p.shirtNumber}</div>` : ''}
+                </div>
+                <div class="player-hero-info">
+                    <div class="player-hero-name">${p.name}</div>
+                    <div class="player-hero-meta">
+                        <span class="player-position-badge" style="background:${color}22;border-color:${color}66;color:${color};">${p.position || 'لاعب'}</span>
+                        ${p.nationality ? `<span class="player-meta-pill">${flagHtml} ${p.nationality}</span>` : ''}
+                        ${p.team ? (p.teamId
+                            ? `<a class="player-meta-pill team-link" href="team?id=${encodeURIComponent(p.teamId)}&name=${encodeURIComponent(p.team)}" title="عرض صفحة ${p.team}">${teamLogoHtml} ${p.team} ↗</a>`
+                            : `<span class="player-meta-pill">${teamLogoHtml} ${p.team}</span>`
+                        ) : ''}
+                    </div>
+                    <div class="player-bio-grid">
+                        ${p.age ? `<div class="bio-item"><div class="bio-label">العمر</div><div class="bio-value">${p.age} سنة</div></div>` : ''}
+                        ${p.dob ? `<div class="bio-item"><div class="bio-label">تاريخ الميلاد</div><div class="bio-value" style="font-size:0.82rem;">${p.dob}</div></div>` : ''}
+                        ${p.shirtNumber ? `<div class="bio-item"><div class="bio-label">رقم القميص</div><div class="bio-value">${p.shirtNumber}</div></div>` : ''}
+                        ${p.nationality ? `<div class="bio-item"><div class="bio-label">الجنسية</div><div class="bio-value">${p.nationality}</div></div>` : ''}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ad Unit: Under Player Hero -->
+            <div class="ad-container ad-horizontal" style="max-width:100%;">
+                <span class="ad-label">إعلان</span>
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-8486549501295296"
+                     data-ad-slot="YYYYYYYYYY"
+                     data-ad-format="auto"
+                     data-full-width-responsive="true"></ins>
+                <script>(adsbygoogle = window.adsbygoogle || []).push({});<\/script>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-section">
+                <div class="stats-section-title">📊 الإحصائيات</div>
+                ${statsHtml}
+            </div>
+        `;
+    }
+    </script>
+</body>
+</html>

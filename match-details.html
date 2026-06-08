@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-adsense-account" content="ca-pub-8486549501295296">
+    <title data-en="Match Details - Kora Legend" data-ar="تفاصيل المباراة - كورة ليجند">تفاصيل المباراة - كورة ليجند</title>
+    <meta name="description" content="تعرف على تفاصيل وملخص وإحصائيات المباراة على موقع كورة ليجند Kora Legend بديل يلا شوت وكووورة. متابعة حية وتشكيلات الفرق.">
+    <meta name="keywords" content="kora legend, korra legend, كورة ليجند, يلا شوت, كووورة, kooora, yalla shoot, في الجول, filgoal, كورة لايف, kora live, تفاصيل المباراة, ملخص المباراة, كورة مباشر">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="كورة ليجند">
+    <link rel="canonical" href="https://koralegend.com/match-details">
+    <!-- Open Graph -->
+    <meta property="og:title" content="تفاصيل المباراة - كورة ليجند">
+    <meta property="og:description" content="تعرف على تفاصيل وملخص وإحصائيات المباراة على موقع كورة ليجند Kora Legend. متابعة حية وتشكيلات الفرق.">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ar_AR">
+    <meta property="og:image" content="https://koralegend.com/logo.png">
+    <meta property="og:site_name" content="Kora Legend">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="تفاصيل المباراة - كورة ليجند">
+    <meta name="twitter:description" content="تعرف على تفاصيل وملخص وإحصائيات المباراة على موقع كورة ليجند Kora Legend.">
+    <meta name="twitter:image" content="https://koralegend.com/logo.png">
+    <link rel="stylesheet" href="styles.min.css?v=2.1">
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8486549501295296" crossorigin="anonymous"></script>
+    <style>
+        /* Dedicated premium page styles */
+        .match-details-container {
+            padding: var(--spacing-xl) 0;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .back-button-container {
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn-back:hover {
+            background: var(--gradient-1);
+            border-color: transparent;
+            transform: translateX(-5px);
+            box-shadow: 0 0 15px rgba(27, 117, 240, 0.4);
+        }
+        
+        /* Premium Match Card Header */
+        .match-hero-card {
+            background: linear-gradient(135deg, rgba(13, 20, 44, 0.85) 0%, rgba(6, 9, 25, 0.95) 100%);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: var(--spacing-lg);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            margin-bottom: var(--spacing-lg);
+            backdrop-filter: blur(15px);
+        }
+        
+        .match-hero-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient-3);
+        }
+        
+        .match-hero-league {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: var(--spacing-md);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+        
+        .match-hero-league-logo {
+            width: 20px;
+            height: 20px;
+            object-fit: contain;
+        }
+        
+        .match-hero-main {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: var(--spacing-md) 0;
+        }
+        
+        .match-hero-team {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .match-hero-team-logo {
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            filter: drop-shadow(0 8px 15px rgba(0, 0, 0, 0.4));
+            transition: transform 0.3s ease;
+        }
+        
+        .match-hero-team:hover .match-hero-team-logo {
+            transform: scale(1.08);
+        }
+        
+        .match-hero-team-name {
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        
+        .match-hero-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--spacing-xs);
+            min-width: 160px;
+        }
+        
+        .match-hero-score {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-md);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--text-primary);
+        }
+        
+        .score-live-pulse {
+            position: relative;
+            color: #ff6b6b;
+            text-shadow: 0 0 15px rgba(255, 107, 107, 0.9);
+            animation: pulse 1.5s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+        
+        .match-hero-status {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .match-hero-status.live {
+            background: #c0392b;
+            border: 1px solid #e74c3c;
+            color: #ffffff;
+            box-shadow: 0 0 12px rgba(192, 57, 43, 0.5);
+        }
+        
+        .match-hero-status.finished {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-secondary);
+        }
+        
+        .match-hero-status.upcoming {
+            background: rgba(27, 117, 240, 0.15);
+            border: 1px solid rgba(27, 117, 240, 0.4);
+            color: var(--primary-color);
+        }
+        
+        .match-hero-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            text-align: center;
+        }
+        
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .meta-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .meta-value {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        /* Premium Navigation Tabs */
+        .details-tabs {
+            display: flex;
+            background: rgba(13, 20, 44, 0.5);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 6px;
+            margin-bottom: var(--spacing-lg);
+            backdrop-filter: blur(10px);
+        }
+        
+        .details-tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            border-radius: 12px;
+            color: var(--text-secondary);
+            font-family: var(--font-body);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .details-tab-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.02);
+        }
+        
+        .details-tab-btn.active {
+            color: var(--text-primary);
+            background: var(--gradient-1);
+            box-shadow: 0 4px 15px rgba(27, 117, 240, 0.3);
+        }
+        
+        /* Dynamic Tab Panels */
+        .tab-panel {
+            display: none;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        
+        .tab-panel.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* 1. Events Timeline Styles */
+        .events-timeline {
+            position: relative;
+            margin: var(--spacing-md) 0;
+        }
+        
+        .events-timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 2px;
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(-50%);
+        }
+        
+        .timeline-event-wrapper {
+            display: flex;
+            margin-bottom: var(--spacing-lg);
+            position: relative;
+            align-items: center;
+            width: 100%;
+        }
+        
+        .timeline-event-item {
+            width: 44%;
+            padding: 1rem;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+        
+        .timeline-event-item:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        
+        /* RTL: home = right side, away = left side */
+        .timeline-event-wrapper.home {
+            flex-direction: row-reverse;
+        }
+        
+        .timeline-event-wrapper.away {
+            flex-direction: row;
+        }
+        
+        /* Spacer to push card to correct side */
+        .timeline-event-wrapper::before {
+            content: '';
+            flex: 1;
+        }
+        
+        .timeline-minute-badge {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--dark-bg);
+            border: 2px solid var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            z-index: 2;
+            box-shadow: 0 0 10px rgba(27, 117, 240, 0.3);
+            flex-shrink: 0;
+        }
+        
+        .timeline-event-wrapper.away .timeline-minute-badge {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 10px rgba(255, 81, 0, 0.3);
+        }
+        
+        .event-type-icon {
+            margin-left: 8px;
+            font-size: 1.15rem;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        
+        .event-player {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+        
+        .event-detail {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        
+        /* 2. Stats Panel Styles */
+        .stats-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: var(--spacing-lg);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .stat-row-item {
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .stat-labels {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+        
+        .stat-label-title {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+        
+        .stat-bars-container {
+            display: flex;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            overflow: hidden;
+            gap: 2px;
+        }
+        
+        .stat-bar-home {
+            background: var(--gradient-1);
+            border-radius: 4px 0 0 4px;
+            transition: width 0.6s cubic-bezier(0.1, 0.8, 0.2, 1);
+        }
+        
+        .stat-bar-away {
+            background: var(--gradient-2);
+            border-radius: 0 4px 4px 0;
+            transition: width 0.6s cubic-bezier(0.1, 0.8, 0.2, 1);
+        }
+        
+        /* 3. Lineups Panel Styles */
+        .lineups-split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-lg);
+        }
+        
+        .team-lineup-column {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: var(--spacing-md);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .team-lineup-column.away::before {
+            background: var(--secondary-color);
+        }
+        
+        .lineup-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-md);
+            padding-bottom: var(--spacing-xs);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .lineup-sub-heading {
+            font-size: 0.9rem;
+            color: var(--primary-color);
+            margin: var(--spacing-md) 0 var(--spacing-xs) 0;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+            padding-bottom: 4px;
+        }
+        
+        .team-lineup-column.away .lineup-sub-heading {
+            color: var(--secondary-color);
+        }
+        
+        .player-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .player-list-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            transition: all 0.2s ease;
+        }
+        
+        .player-list-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateX(-3px);
+        }
+        
+        .player-number {
+            width: 26px;
+            height: 26px;
+            background: rgba(27, 117, 240, 0.15);
+            border: 1px solid rgba(27, 117, 240, 0.3);
+            color: var(--primary-color);
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            margin-left: 12px;
+        }
+        
+        .team-lineup-column.away .player-number {
+            background: rgba(255, 81, 0, 0.15);
+            border: 1px solid rgba(255, 81, 0, 0.3);
+            color: var(--secondary-color);
+        }
+        
+        .player-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+        
+        .coach-wrapper {
+            margin-top: var(--spacing-md);
+            padding: var(--spacing-sm);
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .lineups-split {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-md);
+            }
+            
+            .events-timeline::before {
+                left: 20px;
+                transform: none;
+            }
+            
+            .timeline-event-wrapper,
+            .timeline-event-wrapper.home,
+            .timeline-event-wrapper.away {
+                flex-direction: row;
+                padding-left: 50px;
+            }
+            
+            .timeline-event-wrapper::before {
+                display: none;
+            }
+            
+            .timeline-event-item {
+                width: 100%;
+            }
+            
+            .timeline-minute-badge {
+                left: 0;
+                transform: none;
+            }
+        }
+
+        /* Pitch responsive */
+        #lineupsContainer {
+            width: 100%;
+        }
+        
+        @media (max-width: 500px) {
+            #lineupsContainer [style*="width:32px"] {
+                width: 26px !important;
+                height: 26px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <div class="container">
+            <div class="header-content">
+                <a href="matches" class="logo" style="text-decoration: none; color: inherit;">
+                    <picture><source srcset="logo.webp" type="image/webp"><img src="logo.png" alt="Football World" class="logo-img" width="55" height="55"></picture>
+                    <h1 class="logo-text">KORA LEGEND</h1>
+                </a>
+                
+                <button class="menu-toggle" id="menuToggle" aria-label="Toggle Menu">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </button>
+                
+                <nav class="main-nav">
+                    <ul>
+                        <li><a href="matches" class="nav-link active" data-en="Matches" data-ar="المباريات">المباريات</a></li>
+                        <li><a href="news" class="nav-link" data-en="News" data-ar="الأخبار">الأخبار</a></li>
+
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <div class="match-details-container">
+            <!-- Back Button -->
+            <div class="back-button-container">
+                <a href="matches" class="btn-back">
+                    <span data-en="← Back to Matches" data-ar="← العودة للمباريات">← العودة للمباريات</span>
+                </a>
+            </div>
+
+            <!-- Match Hero Card -->
+            <section class="match-hero-card" id="matchHeroCard">
+                <!-- Will be populated dynamically -->
+            </section>
+
+            <!-- Ad Unit: Under Match Hero -->
+            <div class="ad-container ad-horizontal" style="margin-bottom: var(--spacing-md);">
+                <span class="ad-label">إعلان</span>
+                <ins class="adsbygoogle"
+                     style="display:block"
+                     data-ad-client="ca-pub-8486549501295296"
+                     data-ad-slot="YYYYYYYYYY"
+                     data-ad-format="auto"
+                     data-full-width-responsive="true"></ins>
+                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <nav class="details-tabs">
+                <button class="details-tab-btn active" data-tab="events" data-en="Match Events" data-ar="أحداث المباراة">أحداث المباراة</button>
+                <button class="details-tab-btn" data-tab="stats" data-en="Statistics" data-ar="الإحصائيات">الإحصائيات</button>
+                <button class="details-tab-btn" data-tab="lineups" data-en="Lineups" data-ar="التشكيلة">التشكيلة</button>
+            </nav>
+
+            <!-- Events Panel -->
+            <section class="tab-panel active" id="panel-events">
+                <div class="events-timeline" id="eventsTimeline">
+                    <!-- Events populated dynamically -->
+                </div>
+            </section>
+
+            <!-- Stats Panel -->
+            <section class="tab-panel" id="panel-stats">
+                <div class="stats-card" id="statsCard">
+                    <!-- Stats populated dynamically -->
+                </div>
+            </section>
+
+            <!-- Lineups Panel -->
+            <section class="tab-panel" id="panel-lineups">
+                <div id="lineupsContainer">
+                    <!-- Lineups populated dynamically -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <picture><source srcset="logo.webp" type="image/webp"><img src="logo.png" alt="Football World" class="footer-logo-img" width="40" height="40"></picture>
+                    <p>KORA LEGEND</p>
+                </div>
+                <p class="footer-text" data-en="© YEAR FARES. All rights reserved." data-ar="© YEAR FARES. جميع الحقوق محفوظة.">© 2026 FARES. جميع الحقوق محفوظة.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Database Scripts -->
+    <script src="matches-data.js" defer></script>
+    <script src="match-details-data.js" defer></script>
+    <script src="script.js?v=2.1" defer></script>
+    <script src="match-details.js?v=2.1" defer></script>
+    <script src="live-details.js?v=2.1" defer></script>
+</body>
+</html>
