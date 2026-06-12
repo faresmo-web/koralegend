@@ -430,97 +430,140 @@ function renderLineups(details, matchInfo) {
     const pitchWrapper = document.createElement('div');
     pitchWrapper.style.cssText = 'position:relative;width:100%;max-width:900px;margin:0 auto 2rem;';
 
-    // Pitch SVG background — horizontal layout (home=left, away=right)
+    // Pitch SVG background — Tactical Holographic HUD Layout (Never seen before!)
     pitchWrapper.innerHTML = `
-        <div style="position:relative;width:100%;padding-bottom:60%;border-radius:12px;overflow:hidden;border:2px solid rgba(255,255,255,0.15);box-shadow:0 8px 32px rgba(0,0,0,0.6);">
-            <!-- Pitch base with stripe pattern -->
-            <svg style="position:absolute;top:0;left:0;width:100%;height:100%;" viewBox="0 0 160 96" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- Stripe background -->
+        <style>
+        @keyframes radarPulse {
+            0% { transform: scale(0.7); opacity: 0.8; border-width: 2px; }
+            100% { transform: scale(1.6); opacity: 0; border-width: 1px; }
+        }
+        @keyframes floatNode {
+            0% { transform: translate(-50%, -50%) translateY(0px); }
+            50% { transform: translate(-50%, -50%) translateY(-4px); }
+            100% { transform: translate(-50%, -50%) translateY(0px); }
+        }
+        .player-node { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); animation: floatNode 4s infinite ease-in-out; }
+        .player-node:nth-child(even) { animation-delay: 2s; }
+        .player-node:hover { z-index: 10 !important; animation-play-state: paused; }
+        .player-node:hover .node-core { transform: rotate(45deg) scale(1.2) !important; box-shadow: 0 0 30px currentColor !important; }
+        .player-node:hover .name-tag { background: currentColor !important; color: #000 !important; border-color: transparent !important; transform: scale(1.1); }
+        .player-node:hover .name-tag span { color: #000 !important; font-weight: 900 !important; }
+        </style>
+
+        <div style="position:relative;width:100%;padding-bottom:62%;border-radius:16px;overflow:hidden;background:#060a14;border:1px solid rgba(0, 229, 255, 0.25);box-shadow:inset 0 0 80px rgba(0,100,255,0.15), 0 15px 40px rgba(0,0,0,0.6);">
+            <!-- High Tech Grid Background -->
+            <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(0,229,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,0.04) 1px, transparent 1px);background-size:25px 25px;opacity:0.8;"></div>
+            
+            <svg style="position:absolute;top:0;left:0;width:100%;height:100%;" viewBox="0 0 160 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                    <pattern id="stripes" x="0" y="0" width="20" height="96" patternUnits="userSpaceOnUse">
-                        <rect width="10" height="96" fill="#2d9e4a"/>
-                        <rect x="10" width="10" height="96" fill="#2a9145"/>
-                    </pattern>
-                    <radialGradient id="centerGlow" cx="50%" cy="50%" r="35%">
-                        <stop offset="0%" stop-color="rgba(255,255,255,0.07)"/>
-                        <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+                    <filter id="neonGlowPitch" x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+                        <feMerge>
+                            <feMergeNode in="coloredBlur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                    <radialGradient id="centerLight" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="rgba(0, 229, 255, 0.12)"/>
+                        <stop offset="100%" stop-color="rgba(0, 0, 0, 0)"/>
                     </radialGradient>
                 </defs>
-                <rect width="160" height="96" fill="url(#stripes)"/>
-                <rect width="160" height="96" fill="url(#centerGlow)"/>
-                <!-- Outer border -->
-                <rect x="2" y="2" width="156" height="92" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="0.7"/>
-                <!-- Center line -->
-                <line x1="80" y1="2" x2="80" y2="94" stroke="rgba(255,255,255,0.7)" stroke-width="0.7"/>
-                <!-- Center circle -->
-                <circle cx="80" cy="48" r="11" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="0.7"/>
-                <circle cx="80" cy="48" r="1" fill="rgba(255,255,255,0.9)"/>
-                <!-- Home penalty area (left) -->
-                <rect x="2" y="22" width="24" height="52" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="0.7"/>
-                <rect x="2" y="33" width="11" height="30" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="0.7"/>
-                <circle cx="18" cy="48" r="5.5" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="0.5" stroke-dasharray="2,1"/>
-                <!-- Away penalty area (right) -->
-                <rect x="134" y="22" width="24" height="52" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="0.7"/>
-                <rect x="147" y="33" width="11" height="30" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="0.7"/>
-                <circle cx="142" cy="48" r="5.5" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="0.5" stroke-dasharray="2,1"/>
-                <!-- Goals -->
-                <rect x="0" y="40" width="2" height="16" fill="rgba(255,255,255,0.5)" stroke="rgba(255,255,255,0.8)" stroke-width="0.4"/>
-                <rect x="158" y="40" width="2" height="16" fill="rgba(255,255,255,0.5)" stroke="rgba(255,255,255,0.8)" stroke-width="0.4"/>
-                <!-- Corner arcs -->
-                <path d="M2,2 A3,3 0 0,1 5,5" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="0.6"/>
-                <path d="M158,2 A3,3 0 0,0 155,5" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="0.6"/>
-                <path d="M2,94 A3,3 0 0,0 5,91" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="0.6"/>
-                <path d="M158,94 A3,3 0 0,1 155,91" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="0.6"/>
+                
+                <!-- Center Spotlight -->
+                <rect width="160" height="100" fill="url(#centerLight)"/>
+                
+                <!-- Glowing Pitch Lines -->
+                <g filter="url(#neonGlowPitch)" stroke="rgba(0, 229, 255, 0.4)" stroke-width="0.6" fill="none">
+                    <!-- Outer border -->
+                    <rect x="5" y="5" width="150" height="90" rx="3" />
+                    <!-- Center line -->
+                    <line x1="80" y1="5" x2="80" y2="95" />
+                    <!-- Center circle -->
+                    <circle cx="80" cy="50" r="14" />
+                    <circle cx="80" cy="50" r="0.8" fill="rgba(0, 229, 255, 0.9)" />
+                    <!-- Tactical outer ring -->
+                    <circle cx="80" cy="50" r="26" stroke="rgba(0, 229, 255, 0.15)" stroke-width="0.4" stroke-dasharray="2,3" />
+                    
+                    <!-- Home penalty area (left) -->
+                    <rect x="5" y="24" width="22" height="52" />
+                    <rect x="5" y="36" width="8" height="28" />
+                    <circle cx="19" cy="50" r="0.8" fill="rgba(0, 229, 255, 0.9)"/>
+                    <path d="M27,42 A10,10 0 0,1 27,58" />
+                    
+                    <!-- Away penalty area (right) -->
+                    <rect x="133" y="24" width="22" height="52" />
+                    <rect x="147" y="36" width="8" height="28" />
+                    <circle cx="141" cy="50" r="0.8" fill="rgba(0, 229, 255, 0.9)"/>
+                    <path d="M133,42 A10,10 0 0,0 133,58" />
+                    
+                    <!-- Corner Arcs -->
+                    <path d="M5,9 A4,4 0 0,1 9,5" />
+                    <path d="M155,9 A4,4 0 0,0 151,5" />
+                    <path d="M5,91 A4,4 0 0,0 9,95" />
+                    <path d="M155,91 A4,4 0 0,1 151,95" />
+                </g>
+                
+                <!-- Data aesthetics (random tech lines & HUD elements) -->
+                <path d="M 5 20 L 12 20 L 16 16 L 22 16" stroke="rgba(0, 229, 255, 0.25)" stroke-width="0.4" fill="none" />
+                <path d="M 155 80 L 148 80 L 144 84 L 138 84" stroke="rgba(0, 229, 255, 0.25)" stroke-width="0.4" fill="none" />
+                <circle cx="22" cy="16" r="0.6" fill="rgba(0, 229, 255, 0.6)" />
+                <circle cx="138" cy="84" r="0.6" fill="rgba(0, 229, 255, 0.6)" />
+                <text x="8" y="10" fill="rgba(0, 229, 255, 0.3)" font-size="3" font-family="Orbitron, sans-serif">TACTICAL-HUD_V1.0</text>
+                <text x="125" y="93" fill="rgba(0, 229, 255, 0.3)" font-size="3" font-family="Orbitron, sans-serif">LIVE // TRACKING</text>
             </svg>
+            
             <!-- Players container -->
             <div id="pitchPlayers" style="position:absolute;top:0;left:0;width:100%;height:100%;"></div>
         </div>
     `;
     container.appendChild(pitchWrapper);
 
-    // Render players on pitch — horizontal layout
-    // kooora coords: x=0-100 (left=right flank, right=left flank / width of pitch)
-    //                y=0-100 (0=own goal/keeper, 100=opponent goal/striker)
-    // On horizontal pitch: y → left/right position, x → top/bottom position
-    // Home team on LEFT half, Away team on RIGHT half (mirrored)
+    // Render players on pitch — HUD layout
     const pitchEl = pitchWrapper.querySelector('#pitchPlayers');
 
     const renderPitchPlayer = (player, isHome) => {
         const el = document.createElement('div');
-        const xRaw = player.x ?? 50;  // width of pitch (0-100), maps to top%
-        const yRaw = player.y ?? 50;  // depth from own goal (0=keeper, 100=striker), maps to left%
+        const xRaw = player.x ?? 50;  // width of pitch
+        const yRaw = player.y ?? 50;  // depth
 
-        // Pitch usable area: left 3%–97%, top 3%–97%
-        // y (depth) → horizontal position
-        // x (width) → vertical position
         let leftPct, topPct;
         if (isHome) {
-            // Home on left: y=0 (keeper) → left=3%, y=100 (striker) → left=50%
-            leftPct = 3  + (yRaw / 100) * 47;
-            topPct  = 3  + (xRaw / 100) * 94;
+            leftPct = 5  + (yRaw / 100) * 43;
+            topPct  = 5  + (xRaw / 100) * 90;
         } else {
-            // Away on right (mirrored): y=0 (keeper) → left=97%, y=100 (striker) → left=50%
-            leftPct = 97 - (yRaw / 100) * 47;
-            topPct  = 3  + (xRaw / 100) * 94;
+            leftPct = 95 - (yRaw / 100) * 43;
+            topPct  = 5  + (xRaw / 100) * 90;
         }
 
-        // Circle style: home = black, away = white
-        const circleBg     = isHome ? '#111' : '#fff';
-        const circleColor  = isHome ? '#fff' : '#111';
-        const circleBorder = isHome ? '2.5px solid rgba(255,255,255,0.8)' : '2.5px solid rgba(0,0,0,0.25)';
-        const captainRing  = player.isCaptain ? `outline:2px solid gold;outline-offset:2px;` : '';
+        // Home: Electric Cyan | Away: Neon Magenta
+        const mainColor   = isHome ? '#00e5ff' : '#ff2a75';
+        const darkColor   = isHome ? '#0033aa' : '#880033';
+        
+        const isCapt = player.isCaptain;
+        const captStyle = isCapt ? `box-shadow: 0 0 15px ${mainColor}, inset 0 0 10px rgba(255,255,255,0.5); border: 2px solid #fff;` : `box-shadow: 0 0 10px ${mainColor}66; border: 1.5px solid ${mainColor};`;
 
-        el.style.cssText = `position:absolute;left:${leftPct}%;top:${topPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;cursor:${player.id ? 'pointer' : 'default'};z-index:2;`;
+        el.className = 'player-node';
+        el.style.cssText = `position:absolute;left:${leftPct}%;top:${topPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;cursor:${player.id ? 'pointer' : 'default'};z-index:2;color:${mainColor};`;
+        
         el.innerHTML = `
-            <div style="width:36px;height:36px;border-radius:50%;background:${circleBg};border:${circleBorder};display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.7);${captainRing}transition:transform 0.15s;">
-                <span style="font-size:0.82rem;font-weight:800;color:${circleColor};font-family:'Orbitron',sans-serif;line-height:1;">${player.num}</span>
+            <div style="position:relative; width:34px; height:34px; display:flex; align-items:center; justify-content:center; margin-bottom: 6px;">
+                <!-- Animated Radar Pulse -->
+                <div style="position:absolute; inset:-8px; border:1px solid ${mainColor}; border-radius:50%; animation: radarPulse 2s infinite; pointer-events:none;"></div>
+                
+                <!-- Core Diamond Node -->
+                <div class="node-core" style="position:absolute; width:26px; height:26px; background:linear-gradient(135deg, ${darkColor}dd, ${mainColor}66); backdrop-filter:blur(4px); transform:rotate(45deg); display:flex; align-items:center; justify-content:center; transition:all 0.3s; ${captStyle}">
+                    <span style="transform:rotate(-45deg); font-size:0.8rem; font-weight:900; color:#ffffff; font-family:'Orbitron', sans-serif; text-shadow:0 0 5px #ffffff;">${player.num}</span>
+                </div>
+                ${isCapt ? `<div style="position:absolute; top:-6px; right:-6px; background:gold; color:#000; font-size:0.55rem; font-weight:900; width:15px; height:15px; border-radius:50%; display:flex; align-items:center; justify-content:center; z-index:5; box-shadow:0 0 8px gold;">C</div>` : ''}
             </div>
-            <span style="font-size:0.6rem;color:white;text-shadow:0 1px 4px rgba(0,0,0,1),0 0 8px rgba(0,0,0,0.9);white-space:nowrap;max-width:70px;overflow:hidden;text-overflow:ellipsis;text-align:center;font-weight:600;">${player.name.split(' ').slice(-1)[0]}</span>
+            
+            <div class="name-tag" style="background:rgba(6,10,20,0.85); border:1px solid ${mainColor}40; border-radius:3px; padding:3px 6px; transition:all 0.3s; backdrop-filter:blur(3px);">
+                <span style="font-size:0.6rem; color:#fff; white-space:nowrap; max-width:65px; overflow:hidden; text-overflow:ellipsis; display:block; text-align:center; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; transition:color 0.3s;">${player.name.split(' ').slice(-1)[0]}</span>
+            </div>
         `;
+        
         el.title = `${player.num ? '#' + player.num + ' ' : ''}${player.name}${player.isCaptain ? ' (C)' : ''}`;
         if (player.id) {
-            el.addEventListener('mouseenter', () => el.querySelector('div').style.transform = 'scale(1.15)');
-            el.addEventListener('mouseleave', () => el.querySelector('div').style.transform = 'scale(1)');
             el.addEventListener('click', () => {
                 window.location.href = `player?id=${encodeURIComponent(player.id)}&name=${encodeURIComponent(player.name)}`;
             });

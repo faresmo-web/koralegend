@@ -2656,6 +2656,94 @@ body::after {
     50%       { transform: scale(1.4); opacity: 0.6; }
 }
 
+/* ── Mobile Bell Button (always visible in header on phones) ─ */
+.notif-btn-mobile {
+    display: none; /* hidden by default; shown only on mobile via media query */
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    color: var(--text-primary);
+    transition: var(--transition-normal);
+    flex-shrink: 0;
+    outline: none;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    
+    /* Push to the left (next to hamburger) in RTL */
+    margin-right: auto;
+    margin-left: 15px;
+}
+
+[dir="ltr"] .notif-btn-mobile {
+    margin-right: 15px;
+    margin-left: auto;
+}
+
+.notif-btn-mobile:hover,
+.notif-btn-mobile.active {
+    background: rgba(0, 102, 255, 0.15);
+    border-color: rgba(0, 102, 255, 0.4);
+    color: var(--primary-color);
+    box-shadow: 0 0 15px rgba(0, 102, 255, 0.25);
+    transform: scale(1.05);
+}
+
+.notif-btn-mobile .notif-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    transition: var(--transition-normal);
+    stroke-width: 2.2px;
+}
+
+.notif-btn-mobile:hover .notif-icon,
+.notif-btn-mobile.active .notif-icon {
+    filter: drop-shadow(0 0 5px rgba(0, 102, 255, 0.5));
+    transform: rotate(-10deg) scale(1.1);
+}
+
+.notif-btn-mobile.active .notif-icon {
+    animation: bellShake 4s ease-in-out infinite;
+    color: var(--primary-color);
+}
+
+/* Live green dot for mobile button */
+.notif-dot-mobile {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success-color, #00ff88);
+    border: 2px solid var(--darker-bg);
+    display: none;
+    box-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+}
+
+.notif-btn-mobile.active .notif-dot-mobile {
+    display: block;
+    animation: dotPingMobile 2s ease-in-out infinite;
+}
+
+@keyframes dotPingMobile {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%       { transform: scale(1.3); opacity: 0.8; }
+}
+
+/* Show on mobile, hide on desktop */
+@media (max-width: 992px) {
+    .notif-btn-mobile {
+        display: flex;
+    }
+}
+
 /* ── Push Notification Toast ───────────────────────────────── */
 .push-toast {
     position: fixed;

@@ -1,0 +1,646 @@
+{
+  "info": {
+    "home_team": 5810,
+    "away_team": 10106,
+    "home_coach": {
+      "id": 69655,
+      "title": "جيسي مارش",
+      "image": "https://imgs.ysscores.com/coach/48/17796776517863.png",
+      "link": "https://www.ysscores.com/ar/coach/69655/Jesse-Marsch"
+    },
+    "away_coach": {
+      "id": 27294,
+      "title": "سيرغي بارباريز",
+      "image": "https://imgs.ysscores.com/coach/48/17794855388092.png",
+      "link": "https://www.ysscores.com/ar/coach/27294/Sergej-Barbarez"
+    },
+    "home_formation": "4-4-2",
+    "away_formation": "4-4-2",
+    "type_formation": 2,
+    "match_status": 0
+  },
+  "lineup": {
+    "5810": {
+      "D": {
+        "1": {
+          "team_id": 5810,
+          "player": {
+            "row_id": 729506,
+            "title": "لاريا",
+            "player_number": 22,
+            "image": "https://imgs.ysscores.com/player/48/5961695770820.png",
+            "position": "الظهير الأيمن",
+            "link": "https://www.ysscores.com/ar/player/729506/Laryea"
+          },
+          "type": "lineup",
+          "position": "D",
+          "formation_position": 1,
+          "rating": null,
+          "captain": 0,
+          "man_match": null,
+          "yellow": null,
+          "red": null,
+          "goal": null,
+          "own_goal": null,
+          "assist": null,
+          "substitute": null,
+          "substitute_time": null,
+          "substitute_plus": null,
+          "player_lineup": null
+        },
+        "2": {
+          "team_id": 5810,
+          "player": {
+            "row_id": 847629,
+            "title": "كورنيليوس",
+            "player_number": 13,
+            "image": "https://imgs.ysscores.com/player/48/8121717698190.png",
+            "position": "قلب دفاع",
+            "link": "https://www.ysscores.com/ar/player/847629/Cornelius"
+          },
+          "type": "lineup",
+          "position": "D",
+          "formation_position": 2,
+          "rating": null,
+          "captain": 0,
+          "man_match": null,
+          "yellow": null,
+          "red": null,
+          "goal": null,
+          "own_goal": null,
+          "assist": null,
+          "substitute": null,
+          "substitute_time": null,
+          "substitute_plus": null,
+          "player_lineup": null
+        },
+        "3": {
+          "team_id": 5810,
+          "player": {
+            "row_id": 1399943,
+            "title": "فوجرول",
+            "player_number": 4,
+            "image": "https://imgs.ysscores.com/player/48/9431692625919.png",
+            "position": "قلب دفاع",
+            "link": "https://www.ysscores.com/ar/player/1399943/Fougerolles"
+          },
+          "type": "lineup",
+          "position": "D",
+          "formation_position": 3,
+          "rating": null,
+          "captain": 0,
+          "man_match": null,
+          "yellow": null,
+          "red": null,
+          "goal": null,
+          "own_goal": null,
+          "assist": null,
+          "substitute": null,
+          "substitute_time": null,
+          "substitute_plus": null,
+          "player_lineup": null
+        },
+        "4": {
+          "team_id": 5810,
+          "player": {
+            "row_id": 1055426,
+            "title": "جونستون",
+            "player_number": 2,
+            "image": "https://imgs.ysscores.com/player/48/3971695149030.png",
+            "position": "الظهير الأيمن",
+            "link": "https://www.ysscores.com/ar/player/1055426/Johnston"
+          },
+          "type": "lineup",
+          "position": "D",
+          "formation_position": 4,
+          "rating": null,
+          "captain": 0,
+          "man_match": null,
+          "yellow": null,
+          "red": null,
+          "goal": null,
+          "own_goal": null,
+          "assist": null,
+          "substitute": null,
+          "substitute_time": null,
+          "substitute_plus": null,
+          "player_lineup": null
+        }
+      },
+      "M": {
+        "1": {
+          "team_id": 5810,
+          "player": {
+            "row_id": 932308,
+            "title": "ميلر",
+            "player_number": 11,
+            "image": "https://imgs.ysscores.com/player/48/4941695434152.png",
+            "position": "الجناح الأيسر",
+            "link": "https://www.ysscores.com/ar/player/932308/Millar"
+          },
+          "type": "lineup",
+          "position": "M",
+          "formation_position": 1,
+          "rating": null,
+          "captain": 0,
+          "man_match": null,
+          "yellow": null,
+          "red": null,
+          "goal": null,
+          "own_goal": null,
+          "assist": null,
+          "substitute": null,
+          "substitute_time": null,
+          "substitute_plus": null,
+          "player_lineup": null
+        },
+        "2": {
+          "team_id": 5810,
+          "player": {
+            "row_id": 1288119,
+            "title": "كونيه",
+            "player_number": 8,
+            "image": "https://imgs.ysscores.com/player/48/9891695351737.png",
+            "position": "خط وسط",
+            "link": "https://www.ysscores.com/ar/player/1288119/Kone"
+          },
+          "type": "lineup",
+          "position": "M",
+          "formation_position": 2,
+          "rating": null,
+          "captain": 0,
+          "man_match": null,
+          "yellow": null,
+          "red": null,
+          "goal": null,
+          "own_goal": null,
+          "assist": null,
+          "substitute": null,
+          "substitute_time": null,
+          "substitute_plus": null,
+          "player_lineup": null
+        },
+        "3": {
+          "team_id": 5810,
+          "player": {
+            "row_id": 816223,
+            "title": "أوستاكيو",
+            "player_number": 7,
+            "image": "https://imgs.ysscores.com/player/48/6791691519926.png",
+            "position": "خط وسط",
+            "link": "https://www.ysscores.com/ar/player/816223/Eustaquio"
+          },
+          "type": "lineup",
+          "position": "M",
+          "formation_position": 3,
+          "rating": null,
+          "captain": 1,
+          "man_match": null,
+          "yellow": null,
+          "red": null,
+          "goal": null,
+          "own_goal": null,
+          "assist": null,
+          "substitute": null,
+          "substitute_time": null,
+          "substitute_plus": null,
+          "player_lineup": null
+        },
+        "4": {
+          "team_id": 5810,
+          "player": {
+            "row_id": 1026135,
+            "title": "بوكانان",
+            "player_number": 17,
+            "image": "https://imgs.ysscores.com/player/48/5431692797373.png",
+            "position": "الجناح الأيمن",
+            "link": "https://www.ysscores.com/ar/player/1026135/Buchanan"
+          },
+          "type": "lineup",
+          "position": "M",
+          "formation_position": 4,
+          "rating": null,
+          "captain": 0,
+          "man_match": null,
+          "yellow": null,
+          "red": null,
+          "goal": null,
+          "own_goal": null,
+          "assist": null,
+          "substitute": null,
+          "substitute_time": null,
+          "substitute_plus": null,
+          "player_lineup": null
+        }
+      },
+      "F": {
+        "1": {
+          "team_id": 5810,
+          "player": {
+            "row_id": 544312,
+            "title": "لارين",
+            "player_number": 9,
+            "image": "https://imgs.ysscores.com/player/48/1301691927716.png",
+            "position": "قلب الهجوم",
+            "link": "https://www.ysscores.com/ar/player/544312/Larin"
+          },
+          "type": "lineup",
+          "position": "F",
+          "formation_position": 1,
+          "rating": null,
+          "captain": 0,
+          "man_match": null,
+          "yellow": null,
+          "red": null,
+          "goal": null,
+          "own_goal": null,
+          "assist": null,
+          "substitute": null,
+          "substitute_time": null,
+          "substitute_plus": null,
+          "player_lineup": null
+        },
+        "2": {
+          "team_id": 5810,
+          "player": {
+            "row_id": 939569,
+            "title": "دايفيد",
+            "player_number": 10,
+            "image": "https://imgs.ysscores.com/player/48/1921690285541.png",
+            "position": "قلب الهجوم",
+            "link": "https://www.ysscores.com/ar/player/939569/David"
+          },
+          "type": "lineup",
+          "position": "F",
+          "formation_position": 2,
+          "rating": null,
+          "captain": 0,
+          "man_match": null,
+          "yellow": null,
+          "red": null,
+          "goal": null,
+          "own_goal": null,
+          "assist": null,
+          "substitute": null,
+          "substitute_time": null,
+          "substitute_plus": null,
+          "player_lineup": null
+        }
+      },
+      "G": {
+        "1": {
+          "team_id": 5810,
+          "player": {
+            "row_id": 464919,
+            "title": "كريبو",
+            "player_number": 16,
+            "image": "https://imgs.ysscores.com/player/48/7691693980466.png",
+            "position": "حارس المرمى",
+            "link": "https://www.ysscores.com/ar/player/464919/Crepeau"
+          },
+          "type": "lineup",
+          "position": "G",
+          "formation_position": 1,
+          "rating": null,
+          "captain": 0,
+          "man_match": null,
+          "yellow": null,
+          "red": null,
+          "goal": null,
+          "own_goal": null,
+          "assist": null,
+          "substitute": null,
+          "substitute_time": null,
+          "substitute_plus": null,
+          "player_lineup": null
+        }
+      }
+    },
+    "10106": {
+      "D": {
+        "1": {
+          "team_id": 10106,
+          "player": {
+            "row_id": 304345,
+            "title": "كولاسيناك",
+            "player_number": 5,
+            "image": "https://imgs.ysscores.com/player/48/5771690283103.png",
+            "position": "قلب دفاع",
+            "link": "https://www.ysscores.com/ar/player/304345/Kolasinac"
+          },
+          "type": "lineup",
+          "position": "D",
+          "formation_position": 1,
+          "rating": null,
+          "captain": 0,
+          "man_match": null,
+          "yellow": null,
+          "red": null,
+          "goal": null,
+          "own_goal": null,
+          "assist": null,
+          "substitute": null,
+          "substitute_time": null,
+          "substitute_plus": null,
+          "player_lineup": null
+        },
+        "2": {
+          "team_id": 10106,
+          "player": {
+            "row_id": 1250485,
+            "title": "موهاريموفيتش",
+            "player_number": 4,
+            "image": "https://imgs.ysscores.com/player/48/17811013968727.png",
+            "position": "قلب دفاع",
+            "link": "https://www.ysscores.com/ar/player/1250485/Muharemovic"
+          },
+          "type": "lineup",
+          "position": "D",
+          "formation_position": 2,
+          "rating": null,
+          "captain": 0,
+          "man_match": null,
+          "yellow": null,
+          "red": null,
+          "goal": null,
+          "own_goal": null,
+          "assist": null,
+          "substitute": null,
+          "substitute_time": null,
+          "substitute_plus": null,
+          "player_lineup": null
+        },
+        "3": {
+          "team_id": 10106,
+          "player": {
+            "row_id": 725655,
+            "title": "كاتيتش",
+            "player_number": 18,
+            "image": "https://imgs.ysscores.com/player/48/17811013115619.png",
+            "position": "قلب دفاع",
+            "link": "https://www.ysscores.com/ar/player/725655/Katic"
+          },
+          "type": "lineup",
+          "position": "D",
+          "formation_position": 3,
+          "rating": null,
+          "captain": 0,
+          "man_match": null,
+          "yellow": null,
+          "red": null,
+          "goal": null,
+          "own_goal": null,
+          "assist": null,
+          "substitute": null,
+          "substitute_time": null,
+          "substitute_plus": null,
+          "player_lineup": null
+        },
+        "4": {
+          "team_id": 10106,
+          "player": {
+            "row_id": 958010,
+            "title": "ديديتش",
+            "player_number": 7,
+            "image": "https://imgs.ysscores.com/player/48/6311695096619.png",
+            "position": "الظهير الأيمن",
+            "link": "https://www.ysscores.com/ar/player/958010/Dedic"
+          },
+          "type": "lineup",
+          "position": "D",
+          "formation_position": 4,
+          "rating": null,
+          "captain": 0,
+          "man_match": null,
+          "yellow": null,
+          "red": null,
+          "goal": null,
+          "own_goal": null,
+          "assist": null,
+          "substitute": null,
+          "substitute_time": null,
+          "substitute_plus": null,
+          "player_lineup": null
+        }
+      },
+      "M": {
+        "1": {
+          "team_id": 10106,
+          "player": {
+            "row_id": 1684401,
+            "title": "الاجبيجوفيتش",
+            "player_number": 19,
+            "image": "https://imgs.ysscores.com/player/48/17812071841409.png",
+            "position": "الجناح الأيسر",
+            "link": "https://www.ysscores.com/ar/player/1684401/Alajbegovic"
+          },
+          "type": "lineup",
+          "position": "M",
+          "formation_position": 1,
+          "rating": null,
+          "captain": 0,
+          "man_match": null,
+          "yellow": null,
+          "red": null,
+          "goal": null,
+          "own_goal": null,
+          "assist": null,
+          "substitute": null,
+          "substitute_time": null,
+          "substitute_plus": null,
+          "player_lineup": null
+        },
+        "2": {
+          "team_id": 10106,
+          "player": {
+            "row_id": 1415104,
+            "title": "تاهيروفيتش",
+            "player_number": 6,
+            "image": "https://imgs.ysscores.com/player/48/3241691419520.png",
+            "position": "خط وسط مدافع",
+            "link": "https://www.ysscores.com/ar/player/1415104/Tahirovic"
+          },
+          "type": "lineup",
+          "position": "M",
+          "formation_position": 2,
+          "rating": null,
+          "captain": 0,
+          "man_match": null,
+          "yellow": null,
+          "red": null,
+          "goal": null,
+          "own_goal": null,
+          "assist": null,
+          "substitute": null,
+          "substitute_time": null,
+          "substitute_plus": null,
+          "player_lineup": null
+        },
+        "3": {
+          "team_id": 10106,
+          "player": {
+            "row_id": 639558,
+            "title": "هادزياهميتوفيتش",
+            "player_number": 16,
+            "image": "https://imgs.ysscores.com/player/48/5011690927862.png",
+            "position": "خط وسط مدافع",
+            "link": "https://www.ysscores.com/ar/player/639558/Hadziahmetovic"
+          },
+          "type": "lineup",
+          "position": "M",
+          "formation_position": 3,
+          "rating": null,
+          "captain": 0,
+          "man_match": null,
+          "yellow": null,
+          "red": null,
+          "goal": null,
+          "own_goal": null,
+          "assist": null,
+          "substitute": null,
+          "substitute_time": null,
+          "substitute_plus": null,
+          "player_lineup": null
+        },
+        "4": {
+          "team_id": 10106,
+          "player": {
+            "row_id": 1346860,
+            "title": "باجراكتاريفيتش",
+            "player_number": 20,
+            "image": "https://imgs.ysscores.com/player/48/17812075014774.png",
+            "position": "الجناح الأيمن",
+            "link": "https://www.ysscores.com/ar/player/1346860/Bajraktarevic"
+          },
+          "type": "lineup",
+          "position": "M",
+          "formation_position": 4,
+          "rating": null,
+          "captain": 0,
+          "man_match": null,
+          "yellow": null,
+          "red": null,
+          "goal": null,
+          "own_goal": null,
+          "assist": null,
+          "substitute": null,
+          "substitute_time": null,
+          "substitute_plus": null,
+          "player_lineup": null
+        }
+      },
+      "F": {
+        "1": {
+          "team_id": 10106,
+          "player": {
+            "row_id": 840241,
+            "title": "ديميروفيتش",
+            "player_number": 10,
+            "image": "https://imgs.ysscores.com/player/48/17811008316697.png",
+            "position": "قلب الهجوم",
+            "link": "https://www.ysscores.com/ar/player/840241/Demirovic"
+          },
+          "type": "lineup",
+          "position": "F",
+          "formation_position": 1,
+          "rating": null,
+          "captain": 0,
+          "man_match": null,
+          "yellow": null,
+          "red": null,
+          "goal": null,
+          "own_goal": null,
+          "assist": null,
+          "substitute": null,
+          "substitute_time": null,
+          "substitute_plus": null,
+          "player_lineup": null
+        },
+        "2": {
+          "team_id": 10106,
+          "player": {
+            "row_id": 15403,
+            "title": "دجيكو",
+            "player_number": 11,
+            "image": "https://imgs.ysscores.com/player/48/4781691244117.png",
+            "position": "قلب الهجوم",
+            "link": "https://www.ysscores.com/ar/player/15403/Dzeko"
+          },
+          "type": "lineup",
+          "position": "F",
+          "formation_position": 2,
+          "rating": null,
+          "captain": 1,
+          "man_match": null,
+          "yellow": null,
+          "red": null,
+          "goal": null,
+          "own_goal": null,
+          "assist": null,
+          "substitute": null,
+          "substitute_time": null,
+          "substitute_plus": null,
+          "player_lineup": null
+        }
+      },
+      "G": {
+        "1": {
+          "team_id": 10106,
+          "player": {
+            "row_id": 466867,
+            "title": "فاسيلي",
+            "player_number": 1,
+            "image": "https://imgs.ysscores.com/player/48/7111721379356.png",
+            "position": "حارس المرمى",
+            "link": "https://www.ysscores.com/ar/player/466867/Vasilj"
+          },
+          "type": "lineup",
+          "position": "G",
+          "formation_position": 1,
+          "rating": null,
+          "captain": 0,
+          "man_match": null,
+          "yellow": null,
+          "red": null,
+          "goal": null,
+          "own_goal": null,
+          "assist": null,
+          "substitute": null,
+          "substitute_time": null,
+          "substitute_plus": null,
+          "player_lineup": null
+        }
+      }
+    }
+  },
+  "lineup_injureds": {
+    "5810": [
+      {
+        "team_id": 5810,
+        "player": {
+          "row_id": 751202,
+          "title": "ألفونسو ديفيز",
+          "player_number": 19,
+          "image": "https://imgs.ysscores.com/player/48/4471690393309.png",
+          "position": "الظهير الأيسر",
+          "link": "https://www.ysscores.com/ar/player/751202/Alphonso-Davies"
+        },
+        "type": 8,
+        "type_name": "مصاب (هناك شك في مشاركته)"
+      },
+      {
+        "team_id": 5810,
+        "player": {
+          "row_id": 1440009,
+          "title": "مويس بومبيتو",
+          "player_number": 15,
+          "image": "https://imgs.ysscores.com/player/48/391695768239.png",
+          "position": "قلب دفاع",
+          "link": "https://www.ysscores.com/ar/player/1440009/Moïse-Bombito"
+        },
+        "type": 8,
+        "type_name": "مصاب (هناك شك في مشاركته)"
+      }
+    ]
+  }
+}

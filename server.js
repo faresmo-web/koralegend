@@ -1,7 +1,7 @@
 // ============================================================
 //  KoraLegend Live Server
 //  - Serves static files (HTML/CSS/JS)
-//  - /api/matches  → live matches from kooora (cached 60s)
+//  - /api/matches  → live matches from ysscores (cached 60s)
 //  - /api/details/:id → live match details (cached 30s for live, 5min for finished)
 //  Usage: node server.js
 //         node server.js --port=8080
@@ -12,6 +12,7 @@ const fs        = require('fs');
 const path      = require('path');
 const axios     = require('axios');
 const webPush   = require('web-push');
+const ysscores  = require('./ysscores');
 
 // ── Config ───────────────────────────────────────────────────
 const rawPort  = process.env.PORT || process.argv.find(a => a.startsWith('--port='))?.split('=')[1] || '3000';
@@ -137,35 +138,18 @@ function mapStatus(m) {
     return { en: s || 'Unknown', ar: s || 'غير معروف', isLive: false, isFinished: false };
 }
 
-// ── Kooora: fetch ALL today's matches from matches page ──────
-// The kooora /مباريات-اليوم Next.js JSON returns an object
-// with numeric keys 0..N, each = { competition, matches[] }
+// ── ysscores: fetch date-based matches ─────────────────────
+function ysscoresDateStr(dateStr) {
+    if (dateStr === 'today') return new Date().toISOString().split('T')[0];
+    const d = new Date();
+    if (dateStr === 'yesterday') d.setDate(d.getDate() - 1);
+    if (dateStr === 'tomorrow') d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+}
 
-async function fetchMatchesKooora() {
-    const doFetch = async (forceRefresh = false) => {
-        const buildId = await getBuildId(forceRefresh);
-        const url = `${BASE_URL}/_next/data/${buildId}/%D9%83%D8%B1%D8%A9-%D8%A7%D9%84%D9%82%D8%AF%D9%85/%D9%85%D8%A8%D8%A7%D8%B1%D9%8A%D8%A7%D8%AA-%D8%A7%D9%84%D9%8A%D9%88%D9%85.json`;
-        const r = await axios.get(url, { headers: HEADERS, timeout: 15000 });
-        return r.data?.pageProps?.data;
-    };
-
-    let data;
-    try {
-        data = await doFetch(false);
-    } catch(e) {
-        if (e.response?.status === 404) {
-            console.log('Kooora matches: buildId stale, refreshing...');
-            data = await doFetch(true);
-        } else {
-            throw e;
-        }
-    }
-
-    if (!data) return [];
-
-    // Convert object {0:{competition,matches}, 1:...} → array
-    const competitions = Object.values(data).filter(v => v && v.competition && Array.isArray(v.matches));
-    return parseCompetitions(competitions, 'today');
+async function fetchMatchesYSScores(dateStr = 'today') {
+    const realDate = ysscoresDateStr(dateStr);
+    return ysscores.fetchMatchesForDate(realDate, dateStr);
 }
 
 // ── ESPN API for date-based matches (FALLBACK) ────────────────
@@ -397,207 +381,16 @@ async function fetchMatchDetails(slug, koooraId) {
 
     if (!slug || !koooraId) return details;
 
-    const url  = `${BASE_URL}/%D9%83%D8%B1%D8%A9-%D8%A7%D9%84%D9%82%D8%AF%D9%85/%D9%85%D8%A8%D8%A7%D8%B1%D8%A7%D8%A9/${encodeURIComponent(slug)}/${koooraId}`;
-    const r    = await axios.get(url, { headers: HEADERS, timeout: 15000, responseType: 'arraybuffer' });
-    const html = Buffer.from(r.data).toString('utf8');
-    const nd   = extractNextData(html);
-    const data = nd?.props?.pageProps?.data;
-    if (!data) return details;
+    const slugValue = slug || '';
+    const matchUrl = slugValue ? ysscores.resolveMatchUrl(decodeURIComponent(slugValue)) : '';
+    if (!matchUrl) return details;
 
-    const m    = data.match || {};
-    const tabs = data.tabsInfo || {};
-
-    const statusInfo = mapStatus(m);
-    details.homeScore = m.score?.teamA ?? null;
-    details.awayScore = m.score?.teamB ?? null;
-    details.homePenaltyScore = m.penalty?.teamA ?? null;
-    details.awayPenaltyScore = m.penalty?.teamB ?? null;
-    details.status = statusInfo.ar;
-    details.isLive = statusInfo.isLive;
-    details.isFinished = statusInfo.isFinished;
-
-    details.info.stadium = m.venue?.name || '';
-    details.info.referee = (m.referees && m.referees[0]?.name) || m.referee?.name || '';
-    const channels = (data.tvChannels || []).map(c => c.name).filter(Boolean);
-    details.info.channel = channels.slice(0, 3).join(' | ');
-    details.info.round   = m.gameset?.name || '';
-
-    // ── Lineups (declared early — needed for events parsing) ──
-    const matchLineups = m.lineups || {};
-    details.lineups.confirmed = matchLineups.confirmed === true;
-
-    // ── Events: collect from all player events arrays (lineup + substitutes) ──
-    // kooora stores events per-player, not in a flat commentary array
-    const collectPlayerEvents = (teamData, side) => {
-        if (!teamData) return;
-        const allPlayers = [...(teamData.lineup || []), ...(teamData.substitutes || [])];
-        for (const player of allPlayers) {
-            for (const ev of (player.events || [])) {
-                const type = ev.__typename;
-                const min  = String(ev.period?.minute || '');
-                const add  = String(ev.period?.extra  || '');
-
-                if (type === 'MatchSubstitutionEvent') {
-                    const playerIn  = ev.in?.name  || '';
-                    const playerOut = ev.out?.name || '';
-                    if (playerIn || playerOut) {
-                        // Deduplicate: same minute + same playerOut
-                        const dup = details.events.find(e => e.type === 'sub' && e.min === min && e.descText.includes(playerOut));
-                        if (!dup) {
-                            details.events.push({
-                                min, addedMin: add,
-                                type: 'sub', team: side,
-                                descText: `${playerOut} ↔ ${playerIn}`,
-                            });
-                        }
-                    }
-                } else if (type === 'MatchGoalEvent') {
-                    const scorer = ev.scorer?.name || '';
-                    const assist = ev.assist?.name || '';
-                    const descText = assist ? `${scorer} (${assist})` : scorer;
-                    // Avoid duplicates (same player+minute already added from keyEvents)
-                    const dup = details.events.find(e => (e.type === 'goal' || e.type === 'penalty' || e.type === 'own-goal') && e.min === min && e.descText.startsWith(scorer));
-                    if (!dup && scorer) {
-                        let goalEvType = 'goal';
-                        if (ev.type === 'GOAL_PENALTY') goalEvType = 'penalty';
-                        else if (ev.type === 'GOAL_OWN' || ev.type?.includes('OWN')) goalEvType = 'own-goal';
-                        details.events.push({ min, addedMin: add, type: goalEvType, team: side, descText });
-                    }
-                } else if (type === 'MatchCardEvent') {
-                    const pname = ev.player?.name || '';
-                    const evType = ev.type === 'CARD_YELLOW' ? 'yellow' : 'red';
-                    const dup = details.events.find(e => e.type === evType && e.min === min && e.descText === pname);
-                    if (!dup && pname) {
-                        details.events.push({ min, addedMin: add, type: evType, team: side, descText: pname });
-                    }
-                }
-            }
-        }
-    };
-
-    // Use keyEvents for goals/cards (complete data), then add subs from player events
-    for (const ev of (Array.isArray(m.keyEvents) ? m.keyEvents : [])) {
-        const type = ev.__typename;
-        const side = ev.side === 'TEAM_A' ? 'home' : 'away';
-        const min  = String(ev.period?.minute || '');
-        const add  = String(ev.period?.extra  || '');
-
-        if (type === 'MatchGoalEvent') {
-            const scorer = ev.scorer?.name || '';
-            const assist = ev.assist?.name || '';
-            let goalEvType = 'goal';
-            if (ev.type === 'GOAL_PENALTY') goalEvType = 'penalty';
-            else if (ev.type === 'GOAL_OWN' || ev.type?.includes('OWN')) goalEvType = 'own-goal';
-            details.events.push({ min, addedMin: add, type: goalEvType, team: side, descText: assist ? `${scorer} (${assist})` : scorer });
-        } else if (type === 'MatchCardEvent') {
-            const evType = ev.type === 'CARD_YELLOW' ? 'yellow' : 'red';
-            details.events.push({ min, addedMin: add, type: evType, team: side, descText: ev.player?.name || '' });
-        }
+    try {
+        return await ysscores.fetchMatchDetails(matchUrl);
+    } catch (e) {
+        console.error('fetchMatchDetails ysscores error:', e.message);
+        return details;
     }
-
-    // Add substitutions from player events (not in keyEvents)
-    collectPlayerEvents(matchLineups.teamA, 'home');
-    collectPlayerEvents(matchLineups.teamB, 'away');
-
-    // Fallback: use commentary if keyEvents empty
-    if (details.events.length === 0) {
-        for (const c of (Array.isArray(m.commentary) ? m.commentary : [])) {
-            if (!c.event) continue;
-            const ev   = c.event;
-            const type = ev.__typename;
-            const side = ev.side === 'TEAM_A' ? 'home' : 'away';
-            const min  = String(ev.period?.minute || '');
-            const add  = String(ev.period?.extra  || '');
-            const player = ev.player?.name || ev.scorer?.name || '';
-            const assist = ev.assist?.name || '';
-            let evType = 'other';
-            if (type === 'MatchGoalEvent') {
-                evType = 'goal';
-                if (ev.type === 'GOAL_PENALTY') evType = 'penalty';
-                else if (ev.type === 'GOAL_OWN' || ev.type?.includes('OWN')) evType = 'own-goal';
-            }
-            else if (type === 'MatchCardEvent') evType = ev.type === 'CARD_YELLOW' ? 'yellow' : 'red';
-            else if (type === 'MatchSubstitutionEvent') evType = 'sub';
-            const descText = evType === 'sub'
-                ? `${ev.playerOut?.name || ''} ↔ ${ev.playerIn?.name || player}`
-                : assist ? `${player} (${assist})` : player;
-            details.events.push({ min, addedMin: add, type: evType, team: side, descText });
-        }
-    }
-
-    // m.stats is an object with sections: summary, attacking, passing, duels, defence, discipline
-    // Each section is an array of { type, teamA, teamB }
-    const statsObj = m.stats || {};
-    const statNameMap = {
-        'POSSESSION':       'الاستحواذ',
-        'SHOT_ON_TARGET':   'تسديدات على المرمى',
-        'SHOT_OFF_TARGET':  'تسديدات خارج المرمى',
-        'CORNER_TOTAL':     'ركلات الزاوية',
-        'FOUL_COMMITED':    'الأخطاء',
-        'OFFSIDE_TOTAL':    'التسلل',
-        'SAVE_TOTAL':       'التصديات',
-        'FREE_KICK':        'الركلات الحرة',
-        'YELLOW_CARD':      'البطاقات الصفراء',
-        'RED_CARD':         'البطاقات الحمراء',
-        'PASS_TOTAL':       'التمريرات',
-        'PASS_ACCURATE':    'التمريرات الدقيقة',
-        'TACKLE_TOTAL':     'الاعتراضات',
-        'AERIAL_TOTAL':     'الكرات الهوائية',
-        'DRIBBLE_TOTAL':    'المراوغات',
-        'CROSS_TOTAL':      'العرضيات',
-    };
-
-    // Use summary section first, then add others
-    const sections = ['summary', 'attacking', 'passing', 'duels', 'defence', 'discipline'];
-    const seenTypes = new Set();
-    for (const section of sections) {
-        const arr = statsObj[section];
-        if (!Array.isArray(arr)) continue;
-        for (const s of arr) {
-            if (!s.type || seenTypes.has(s.type)) continue;
-            seenTypes.add(s.type);
-            const name = statNameMap[s.type] || s.type;
-            const home = s.teamA !== undefined ? String(s.teamA) : '';
-            const away = s.teamB !== undefined ? String(s.teamB) : '';
-            if (home !== '' || away !== '') details.stats.push({ name, home, away });
-        }
-    }
-
-    // Fallback: tabsInfo.stats if it's an array
-    if (details.stats.length === 0 && Array.isArray(tabs.stats)) {
-        for (const s of tabs.stats) {
-            const name = s.name || s.label || '';
-            const home = s.teamA !== undefined ? String(s.teamA) : String(s.home || '');
-            const away = s.teamB !== undefined ? String(s.teamB) : String(s.away || '');
-            if (name) details.stats.push({ name, home, away });
-        }
-    }
-
-    // ── Parse lineup players ──
-    const parseTeam = (teamData, side) => {
-        if (!teamData) return;
-        details.lineups[side].formation = teamData.formation || '';
-        details.lineups[side].coach     = teamData.coach?.name || '';
-        for (const entry of (teamData.lineup || [])) {
-            const name = entry.person?.name || entry.player?.name || '';
-            if (!name) continue;
-            const p = {
-                id:        entry.person?.id || entry.player?.id || '',
-                num:       String(entry.shirtNumber || ''),
-                name,
-                image:     entry.person?.image?.url || '',
-                x:         entry.pitchPosition?.x ?? null,
-                y:         entry.pitchPosition?.y ?? null,
-                isCaptain: entry.isCaptain || false,
-            };
-            if (entry.pitchPosition) details.lineups[side].starters.push(p);
-            else                     details.lineups[side].subs.push(p);
-        }
-    };
-    parseTeam(matchLineups.teamA, 'home');
-    parseTeam(matchLineups.teamB, 'away');
-
-    return details;
 }
 
 // ── Fetch Article ────────────────────────────────────────────
@@ -929,17 +722,13 @@ async function handleMatches(req, res) {
     if (cached) return sendJSON(res, cached);
 
     let matches = [];
-    let source  = 'kooora';
+    let source  = 'ysscores';
 
     try {
-        if (reqDate === 'today') {
-            matches = await fetchMatchesKooora();
-            console.log(`[kooora] fetched ${matches.length} matches from ${[...new Set(matches.map(m => m.league))].length} leagues`);
-        } else {
-            throw new Error('Kooora only supports today');
-        }
+        matches = await fetchMatchesYSScores(reqDate);
+        console.log(`[ysscores] fetched ${matches.length} matches from ${[...new Set(matches.map(m => m.league))].length} leagues`);
     } catch (e) {
-        console.warn('Kooora matches fallback to ESPN:', e.message);
+        console.warn('YSScores matches fallback to ESPN:', e.message);
         source = 'espn';
         try {
             matches = await fetchMatchesESPN(reqDate);
@@ -1256,11 +1045,12 @@ function serveStatic(req, res) {
 
 // ── Helpers ──────────────────────────────────────────────────
 function sendJSON(res, data) {
-    const body = JSON.stringify(data);
+    const body = Buffer.from(JSON.stringify(data), 'utf-8');
     res.writeHead(200, {
-        'Content-Type':                'application/json',
+        'Content-Type':                'application/json; charset=utf-8',
         'Access-Control-Allow-Origin': '*',
         'Cache-Control':               'no-store',
+        'Content-Length':              body.byteLength,
     });
     res.end(body);
 }
@@ -1332,7 +1122,7 @@ async function pushDaemonTick() {
     try {
         // 1. Fetch latest matches (today)
         let matches = [];
-        try { matches = await fetchMatchesKooora(); } catch { }
+        try { matches = await fetchMatchesYSScores(); } catch { }
         if (!matches.length) { try { matches = await fetchMatchesESPN('today'); } catch { } }
 
         for (const m of matches) {

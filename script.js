@@ -557,14 +557,27 @@ function urlBase64ToUint8Array(base64String) {
 
 // ── Set button visual state ───────────────────────────────────
 function setNotifBtnState(subscribed) {
+    // Desktop nav button
     const btn = document.getElementById(PUSH_BTN_ID);
-    if (!btn) return;
-    if (subscribed) {
-        btn.classList.add('active');
-        btn.title = 'تم تفعيل الإشعارات — انقر لإلغائها';
-    } else {
-        btn.classList.remove('active');
-        btn.title = 'اشترك في إشعارات الأهداف والمباريات';
+    if (btn) {
+        if (subscribed) {
+            btn.classList.add('active');
+            btn.title = 'تم تفعيل الإشعارات — انقر لإلغائها';
+        } else {
+            btn.classList.remove('active');
+            btn.title = 'اشترك في إشعارات الأهداف والمباريات';
+        }
+    }
+    // Mobile header button
+    const mobileBtn = document.getElementById('koraNotifBtnMobile');
+    if (mobileBtn) {
+        if (subscribed) {
+            mobileBtn.classList.add('active');
+            mobileBtn.title = 'تم تفعيل الإشعارات — انقر لإلغائها';
+        } else {
+            mobileBtn.classList.remove('active');
+            mobileBtn.title = 'فعّل الإشعارات';
+        }
     }
 }
 
@@ -634,45 +647,64 @@ async function unsubscribeFromPush() {
     }
 }
 
+// ── Shared click handler for any notif button ────────────────
+async function handleNotifClick() {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) {
+        unsubscribeFromPush();
+    } else {
+        subscribeToPush();
+    }
+}
+
 // ── Inject the notification bell button into the header ───────
 function injectNotifButton() {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
     if (document.getElementById(PUSH_BTN_ID)) return; // Already injected
 
-    // Find nav ul to inject as a nav item
+    const bellSVG = `<svg class="notif-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    </svg>`;
+
+    // ── 1. Desktop: inject as a nav item inside .main-nav ul ──
     const navUl = document.querySelector('.main-nav ul');
-    if (!navUl) return;
+    if (navUl) {
+        const li = document.createElement('li');
+        li.className = 'notif-nav-item';
 
-    const li = document.createElement('li');
-    li.className = 'notif-nav-item';
+        const btn = document.createElement('button');
+        btn.id        = PUSH_BTN_ID;
+        btn.className = 'notif-btn';
+        btn.setAttribute('aria-label', 'إشعارات');
+        btn.title     = 'اشترك في إشعارات الأهداف والمباريات';
+        btn.innerHTML = `${bellSVG}<span class="notif-label">إشعارات</span><span class="notif-dot"></span>`;
+        btn.addEventListener('click', handleNotifClick);
 
-    const btn = document.createElement('button');
-    btn.id        = PUSH_BTN_ID;
-    btn.className = 'notif-btn';
-    btn.setAttribute('aria-label', 'إشعارات');
-    btn.title     = 'اشترك في إشعارات الأهداف والمباريات';
-    btn.innerHTML = `
-        <svg class="notif-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-        </svg>
-        <span class="notif-label">إشعارات</span>
-        <span class="notif-dot"></span>
-    `;
+        li.appendChild(btn);
+        navUl.appendChild(li);
+    }
 
-    // Click handler
-    btn.addEventListener('click', async () => {
-        const reg = await navigator.serviceWorker.ready;
-        const sub = await reg.pushManager.getSubscription();
-        if (sub) {
-            unsubscribeFromPush();
+    // ── 2. Mobile: inject a compact icon button in .header-content ──
+    const headerContent = document.querySelector('.header-content');
+    const menuToggle    = document.getElementById('menuToggle');
+    if (headerContent) {
+        const mobileBtn = document.createElement('button');
+        mobileBtn.id        = 'koraNotifBtnMobile';
+        mobileBtn.className = 'notif-btn-mobile';
+        mobileBtn.setAttribute('aria-label', 'إشعارات');
+        mobileBtn.title     = 'فعّل الإشعارات';
+        mobileBtn.innerHTML = `${bellSVG}<span class="notif-dot-mobile"></span>`;
+        mobileBtn.addEventListener('click', handleNotifClick);
+
+        // Insert before menu-toggle so it appears between logo and hamburger
+        if (menuToggle) {
+            headerContent.insertBefore(mobileBtn, menuToggle);
         } else {
-            subscribeToPush();
+            headerContent.appendChild(mobileBtn);
         }
-    });
-
-    li.appendChild(btn);
-    navUl.appendChild(li);
+    }
 }
 
 // ── Boot: register service worker and restore state ───────────

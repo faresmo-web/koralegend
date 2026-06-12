@@ -22,7 +22,7 @@
     <meta name="twitter:title" content="تفاصيل المباراة - كورة ليجند">
     <meta name="twitter:description" content="تعرف على تفاصيل وملخص وإحصائيات المباراة على موقع كورة ليجند Kora Legend.">
     <meta name="twitter:image" content="https://koralegend.com/logo.png">
-    <link rel="stylesheet" href="styles.min.css?v=2.1">
+    <link rel="stylesheet" href="styles.min.css?v=2.2">
     <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8486549501295296" crossorigin="anonymous"></script>
     <style>
@@ -530,6 +530,36 @@
         
         /* Responsive adjustments */
         @media (max-width: 768px) {
+            .match-hero-main {
+                display: flex !important;
+                flex-direction: row !important;
+                justify-content: space-between;
+                align-items: center;
+                gap: 5px;
+            }
+            .match-hero-team {
+                width: 33%;
+                flex: none;
+                gap: 5px;
+            }
+            .match-hero-team-logo {
+                width: 70px;
+                height: 70px;
+            }
+            .match-hero-team-name {
+                font-size: 1rem;
+                line-height: 1.2;
+            }
+            .match-hero-center {
+                min-width: 100px;
+                width: 34%;
+                flex: none;
+            }
+            .match-hero-score {
+                font-size: 2.2rem;
+                gap: 5px;
+            }
+            
             .lineups-split {
                 grid-template-columns: 1fr;
                 gap: var(--spacing-md);
@@ -558,6 +588,39 @@
             .timeline-minute-badge {
                 left: 0;
                 transform: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .match-hero-card {
+                padding: 1rem;
+                border-radius: 16px;
+            }
+            .match-hero-team-logo {
+                width: 55px;
+                height: 55px;
+            }
+            .match-hero-team-name {
+                font-size: 0.8rem;
+            }
+            .match-hero-score {
+                font-size: 1.8rem;
+            }
+            .match-hero-status {
+                font-size: 0.7rem;
+                padding: 4px 8px;
+            }
+            .match-hero-meta {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                margin-top: 1rem;
+                padding-top: 1rem;
+            }
+            .meta-label {
+                font-size: 0.65rem;
+            }
+            .meta-value {
+                font-size: 0.8rem;
             }
         }
 
@@ -674,7 +737,7 @@
     <!-- Database Scripts -->
     <script src="matches-data.js" defer></script>
     <script src="match-details-data.js" defer></script>
-    <script src="script.js?v=2.1" defer></script>
+    <script src="script.js?v=2.2" defer></script>
     <script src="match-details.js?v=2.1" defer></script>
     <script src="live-details.js?v=2.1" defer></script>
 </body>

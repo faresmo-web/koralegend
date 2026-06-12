@@ -1,27 +1,21 @@
 // ============================================================
 //  KoraLegend Live Server
 //  - Serves static files (HTML/CSS/JS)
-//  - Proxies kooora.com data every 60 seconds
+//  - Fetches live matches and details from ysscores.com
 //  - Exposes /api/matches and /api/match/:id endpoints
 //  Usage: node live-server.js
 //  Then open: http://localhost:3000
 // ============================================================
 
-const http   = require('http');
-const fs     = require('fs');
-const path   = require('path');
-const axios  = require('axios');
+const http    = require('http');
+const fs      = require('fs');
+const path    = require('path');
+const axios   = require('axios');
 const webPush = require('web-push');
+const ysscores = require('./ysscores');
 
 const PORT     = 3000;
 const TIMEZONE = 'Africa/Cairo';
-const BASE_URL = 'https://www.kooora.com';
-const HEADERS  = {
-    'User-Agent':      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    'Accept':          'text/html,application/json,*/*',
-    'Accept-Language': 'ar,en-US;q=0.7,en;q=0.3',
-    'Referer':         'https://www.kooora.com/',
-};
 
 // ── VAPID / Push Setup ───────────────────────────────────────
 const VAPID_FILE = path.join(__dirname, 'vapid-keys.json');
@@ -75,102 +69,22 @@ let matchesCache   = null;   // { en: {today,yesterday,tomorrow}, ar: {...} }
 let lastFetchTime  = 0;
 const CACHE_TTL_MS = 60 * 1000; // 60 seconds
 
-// ── Helpers ──────────────────────────────────────────────────
-function extractNextData(html) {
-    const m = html.match(/<script id="__NEXT_DATA__" type="application\/json">(.+?)<\/script>/s);
-    return m ? JSON.parse(m[1]) : null;
-}
-
-function formatTime(startDate) {
-    if (!startDate) return '';
-    try {
-        return new Date(startDate).toLocaleTimeString('ar-EG', {
-            hour: '2-digit', minute: '2-digit',
-            timeZone: TIMEZONE, hour12: false,
-        });
-    } catch { return ''; }
-}
-
-function mapStatus(m) {
-    const s = m.status;
-    if (s === 'FIXTURE')   return { en: 'Upcoming',  ar: 'قادمة',    isLive: false, isFinished: false };
-    if (s === 'RESULT')    return { en: 'Finished',  ar: 'انتهت',    isLive: false, isFinished: true  };
-    if (s === 'POSTPONED') return { en: 'Postponed', ar: 'مؤجلة',   isLive: false, isFinished: false };
-    if (s === 'CANCELLED') return { en: 'Cancelled', ar: 'ملغاة',   isLive: false, isFinished: false };
-    if (s === 'LIVE' || s === 'IN_PROGRESS') {
-        const min  = m.period?.minute;
-        const type = m.period?.type;
-        if (type === 'HALF_TIME') return { en: 'HT', ar: 'استراحة', isLive: true, isFinished: false };
-        return { en: min ? `${min}'` : 'Live', ar: min ? `${min}'` : 'مباشر', isLive: true, isFinished: false };
-    }
-    return { en: s || 'Unknown', ar: s || 'غير معروف', isLive: false, isFinished: false };
-}
-
-async function fetchMatchesForDate(dateStr) {
-    const url = `${BASE_URL}/%D9%83%D8%B1%D8%A9-%D8%A7%D9%84%D9%82%D8%AF%D9%85/%D9%85%D8%A8%D8%A7%D8%B1%D9%8A%D8%A7%D8%AA-%D8%A7%D9%84%D9%8A%D9%88%D9%85?date=${dateStr}`;
-    const r   = await axios.get(url, { headers: HEADERS, timeout: 15000 });
-    const nd  = extractNextData(r.data);
-    return nd?.props?.pageProps?.data || [];
-}
-
-function parseCompetitions(competitions, dateLabel) {
-    const matches = [];
-    for (const comp of competitions) {
-        const league     = comp.competition?.name || 'Unknown';
-        const leagueLogo = comp.competition?.image?.url || '';
-        const area       = comp.competition?.area?.name || '';
-        for (const m of (comp.matches || [])) {
-            const status = mapStatus(m);
-            // Extract round from gameset field
-            const roundName = m.gameset?.name || '';
-
-            matches.push({
-                id:          m.id || '',
-                league,
-                leagueLogo,
-                countryName: area,
-                homeTeam:    m.teamA?.name || 'Home',
-                awayTeam:    m.teamB?.name || 'Away',
-                homeLogo:    m.teamA?.image?.url || '',
-                awayLogo:    m.teamB?.image?.url || '',
-                homeScore:   m.score?.teamA ?? null,
-                awayScore:   m.score?.teamB ?? null,
-                time:        formatTime(m.startDate),
-                status:      dateLabel === 'tomorrow' ? 'Upcoming' : status.en,
-                statusAr:    dateLabel === 'tomorrow' ? 'قادمة'    : status.ar,
-                isLive:      status.isLive,
-                isFinished:  status.isFinished,
-                date:        dateLabel,
-                startTime:   m.startDate || '',
-                slug:        m.link?.slug || '',
-                koooraId:    m.link?.id   || m.id || '',
-                round:       roundName,
-            });
-        }
-    }
-    return matches;
-}
-
 async function refreshMatches() {
     const now = Date.now();
     if (matchesCache && (now - lastFetchTime) < CACHE_TTL_MS) return matchesCache;
 
-    console.log(`[${new Date().toLocaleTimeString('ar-EG', { timeZone: TIMEZONE })}] 🔄 Fetching fresh data from kooora...`);
+    console.log(`[${new Date().toLocaleTimeString('ar-EG', { timeZone: TIMEZONE })}] 🔄 Fetching fresh data from ysscores...`);
 
     const today     = new Date();
     const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
     const tomorrow  = new Date(today); tomorrow.setDate(today.getDate() + 1);
     const fmt = d => d.toISOString().split('T')[0];
 
-    const [ydComps, tdComps, tmComps] = await Promise.all([
-        fetchMatchesForDate(fmt(yesterday)),
-        fetchMatchesForDate(fmt(today)),
-        fetchMatchesForDate(fmt(tomorrow)),
+    const [yd, td, tm] = await Promise.all([
+        ysscores.fetchMatchesForDate(fmt(yesterday), 'yesterday'),
+        ysscores.fetchMatchesForDate(fmt(today), 'today'),
+        ysscores.fetchMatchesForDate(fmt(tomorrow), 'tomorrow'),
     ]);
-
-    const yd = parseCompetitions(ydComps, 'yesterday');
-    const td = parseCompetitions(tdComps, 'today');
-    const tm = parseCompetitions(tmComps, 'tomorrow');
 
     matchesCache = {
         en: { today: td, yesterday: yd, tomorrow: tm },
@@ -190,7 +104,6 @@ async function refreshMatches() {
 
 // ── Match detail fetch ────────────────────────────────────────
 async function fetchMatchDetail(matchId) {
-    // Find match in cache to get slug
     if (!matchesCache) await refreshMatches();
     const allMatches = [
         ...(matchesCache?.en?.today     || []),
@@ -198,94 +111,12 @@ async function fetchMatchDetail(matchId) {
         ...(matchesCache?.en?.tomorrow  || []),
     ];
     const match = allMatches.find(m => m.id === matchId);
-    if (!match?.slug) return null;
+    if (!match) return null;
 
-    const slug = encodeURIComponent(match.slug);
-    const url  = `${BASE_URL}/%D9%83%D8%B1%D8%A9-%D8%A7%D9%84%D9%82%D8%AF%D9%85/%D9%85%D8%A8%D8%A7%D8%B1%D8%A7%D8%A9/${slug}/${match.koooraId}`;
-    const r    = await axios.get(url, { headers: HEADERS, timeout: 15000 });
-    const nd   = extractNextData(r.data);
-    const data = nd?.props?.pageProps?.data;
-    if (!data) return null;
+    const matchUrl = match.matchUrl || match.slug || '';
+    if (!matchUrl) return null;
 
-    const m    = data.match || {};
-    const tabs = data.tabsInfo || {};
-
-    const details = {
-        stats:   [],
-        events:  [],
-        lineups: {
-            confirmed: false,
-            home: { starters: [], subs: [], coach: '', formation: '' },
-            away: { starters: [], subs: [], coach: '', formation: '' },
-        },
-        info: { channel: '', stadium: '', referee: '' },
-    };
-
-    details.info.stadium = m.venue?.name || '';
-    details.info.referee = (m.referees && m.referees[0]?.name) || '';
-    const channels = (data.tvChannels || []).map(c => c.name).filter(Boolean);
-    details.info.channel = channels.slice(0, 3).join(' | ');
-
-    // Extract round/gameweek from gameset field
-    const roundName = m.gameset?.name || '';
-    details.info.round = roundName;
-
-    for (const c of (m.commentary || [])) {
-        if (!c.event) continue;
-        const ev   = c.event;
-        const type = ev.__typename;
-        const side = ev.side === 'TEAM_A' ? 'home' : 'away';
-        const min  = String(ev.period?.minute || '');
-        const add  = String(ev.period?.extra  || '');
-        const player = ev.player?.name || ev.scorer?.name || '';
-        const assist = ev.assist?.name || '';
-        let evType = 'other';
-        if (type === 'MatchGoalEvent') {
-            evType = 'goal';
-            if (ev.type === 'GOAL_PENALTY') evType = 'penalty';
-            else if (ev.type === 'GOAL_OWN' || ev.type?.includes('OWN')) evType = 'own-goal';
-        }
-        else if (type === 'MatchCardEvent') evType = ev.type === 'CARD_YELLOW' ? 'yellow' : 'red';
-        else if (type === 'MatchSubstitutionEvent') evType = 'sub';
-        const descText = evType === 'sub'
-            ? `${ev.playerOut?.name || ''} ↔ ${ev.playerIn?.name || player}`
-            : assist ? `${player} (${assist})` : player;
-        details.events.push({ min, addedMin: add, type: evType, team: side, descText });
-    }
-
-    for (const s of (tabs.stats || m.stats || [])) {
-        const name = s.name || s.label || '';
-        const home = s.teamA !== undefined ? String(s.teamA) : String(s.home || '');
-        const away = s.teamB !== undefined ? String(s.teamB) : String(s.away || '');
-        if (name) details.stats.push({ name, home, away });
-    }
-
-    const matchLineups = m.lineups || {};
-    details.lineups.confirmed = matchLineups.confirmed === true;
-    const parseTeam = (teamData, side) => {
-        if (!teamData) return;
-        details.lineups[side].formation = teamData.formation || '';
-        details.lineups[side].coach     = teamData.coach?.name || '';
-        for (const entry of (teamData.lineup || [])) {
-            const name = entry.person?.name || entry.player?.name || '';
-            if (!name) continue;
-            const p = {
-                num:       String(entry.shirtNumber || ''),
-                name,
-                image:     entry.person?.image?.url || '',
-                x:         entry.pitchPosition?.x ?? null,
-                y:         entry.pitchPosition?.y ?? null,
-                isCaptain: entry.isCaptain || false,
-            };
-
-            if (entry.pitchPosition) details.lineups[side].starters.push(p);
-            else                     details.lineups[side].subs.push(p);
-        }
-    };
-    parseTeam(matchLineups.teamA, 'home');
-    parseTeam(matchLineups.teamB, 'away');
-
-    return details;
+    return ysscores.fetchMatchDetails(matchUrl);
 }
 
 // ── Push API handlers ────────────────────────────────────────
