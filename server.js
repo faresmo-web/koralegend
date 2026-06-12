@@ -747,7 +747,7 @@ async function handleMatches(req, res) {
     });
 
     const hasLive = matches.some(m => m.isLive);
-    const ttl     = hasLive ? 30_000 : 60_000;
+    const ttl     = hasLive ? 10_000 : 60_000;
 
     const result = { matches, updatedAt: new Date().toISOString(), source };
     setCache(cacheKey, result, ttl);

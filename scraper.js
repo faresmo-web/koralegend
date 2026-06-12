@@ -102,6 +102,12 @@ function extractMatchesFromHTML($, dateLabel, dateStr) {
             if (scoreWrap.length) {
                 homeScore = scoreWrap.find('.score-num').first().text().trim();
                 awayScore = scoreWrap.find('.score-num').last().text().trim();
+            } else {
+                const scoreEls = resultWrap.find('.first-team-result, .second-team-result, .score-num');
+                if (scoreEls.length >= 2) {
+                    homeScore = scoreEls.eq(0).text().trim();
+                    awayScore = scoreEls.eq(1).text().trim();
+                }
             }
 
             const statusText = resultWrap.find('.match-status').text().trim() || resultWrap.find('.match-status-end').text().trim();

@@ -10,6 +10,8 @@ let selectedStatus = 'all';     // 'all' | 'live'
 let refreshTimer   = null;
 let lastMatches    = [];
 let isServerOnline = false;
+let liveClockTimer = null;
+let liveClockBaseTime = {};  // matchId -> { minute, second, timestamp }
 
 
 
@@ -148,7 +150,10 @@ async function loadLive(silent = false) {
 
         // Schedule next refresh silently
         const hasLive = lastMatches.some(m => m.isLive);
-        refreshTimer  = setTimeout(() => loadLive(true), hasLive ? 30_000 : 60_000);
+        // Refresh data every 10s for fast bot sync, else 60s
+        refreshTimer = setTimeout(() => {
+            loadLive(true);
+        }, hasLive ? 10_000 : 60_000);
 
     } catch (e) {
         isServerOnline = false;
@@ -225,59 +230,36 @@ function renderMatches(matches, silent = false) {
         return 0;
     });
 
-    // ── Silent patch: update only changed match rows ──────────
+    // ── Silent patch: detect state changes and update ──────────
     if (silent && container.children.length > 0) {
+        // Check if any match changed state (upcoming→live, live→finished)
+        let needsFullRender = false;
         filtered.forEach(match => {
             const row = container.querySelector(`.match-row-item[data-id="${match.id}"]`);
-            if (!row) return;
+            if (!row) { needsFullRender = true; return; }
 
-            // Update score
-            const scoreEl = row.querySelector('.match-score-badge');
-            if (scoreEl) {
-                const hs = match.homeScore !== null && match.homeScore !== undefined ? match.homeScore : '-';
-                const as = match.awayScore !== null && match.awayScore !== undefined ? match.awayScore : '-';
-                const nums = scoreEl.querySelectorAll('.score-num');
-                if (nums[0] && nums[0].textContent !== String(hs)) nums[0].textContent = hs;
-                if (nums[1] && nums[1].textContent !== String(as)) nums[1].textContent = as;
-                // Toggle live class
-                if (match.isLive) scoreEl.classList.add('live');
-                else scoreEl.classList.remove('live');
-            }
-
-            // Update status badge
-            const badge = row.querySelector('.match-status-badge');
-            if (badge) {
-                const statusText = match.statusAr || match.status;
-                if (badge.textContent !== statusText) badge.textContent = statusText;
-                badge.className = `match-status-badge ${match.isLive ? 'status-live' : match.isFinished ? 'status-finished' : 'status-upcoming'}`;
-            }
-
-            // Update penalty score
-            const hasPenalty = match.homePenaltyScore !== null && match.homePenaltyScore !== undefined &&
-                                match.awayPenaltyScore !== null && match.awayPenaltyScore !== undefined;
-            let penaltyEl = row.querySelector('.match-penalty-badge');
-            if (hasPenalty) {
-                const text = `(ر.ت. ${match.homePenaltyScore} - ${match.awayPenaltyScore})`;
-                if (!penaltyEl) {
-                    const infoCenter = row.querySelector('.match-info-center');
-                    if (infoCenter) {
-                        const statusBadgeEl = infoCenter.querySelector('.match-status-badge');
-                        const newBadge = document.createElement('div');
-                        newBadge.className = 'match-penalty-badge';
-                        newBadge.textContent = text;
-                        if (statusBadgeEl && statusBadgeEl.nextSibling) {
-                            infoCenter.insertBefore(newBadge, statusBadgeEl.nextSibling);
-                        } else {
-                            infoCenter.appendChild(newBadge);
-                        }
-                    }
-                } else if (penaltyEl.textContent !== text) {
-                    penaltyEl.textContent = text;
+            // Check if state changed by comparing data attributes
+            const oldStatus = row.dataset.statusStr || '';
+            const newStatus = `${match.isLive ? 'L' : match.isFinished ? 'F' : 'U'}_${match.homeScore}_${match.awayScore}_${match.statusAr || ''}`;
+            if (oldStatus !== newStatus) {
+                // State changed — rebuild this row entirely
+                const newRow = document.createElement('div');
+                newRow.innerHTML = matchRowHtml(match);
+                const newRowEl = newRow.firstElementChild;
+                if (newRowEl) {
+                    newRowEl.dataset.statusStr = newStatus;
+                    newRowEl.addEventListener('click', () => {
+                        window.location.href = `match-details?id=${match.id}`;
+                    });
+                    row.replaceWith(newRowEl);
                 }
-            } else if (penaltyEl) {
-                penaltyEl.remove();
             }
         });
+
+        if (needsFullRender) {
+            // New matches appeared or disappeared — do full render
+            renderMatches(filtered, false);
+        }
         return; // Done — no full re-render
     }
 
@@ -354,6 +336,8 @@ function renderMatches(matches, silent = false) {
             window.location.href = `match-details?id=${row.dataset.id}`;
         });
     });
+
+
 }
 
 // ── Match row HTML ────────────────────────────────────────────
@@ -369,20 +353,31 @@ function matchRowHtml(match) {
     let centerHtml, statusBadge;
 
     if (selectedDate === 'tomorrow' || isUpcoming) {
-        centerHtml  = `<div class="match-time-badge">${match.time}</div><div class="match-vs-badge">ضد</div>`;
+        centerHtml  = `<div class="match-time-badge" style="font-family: 'Cairo', sans-serif; font-weight: 700; color: var(--primary-color); font-size: 0.95rem; letter-spacing: 0.5px;">${match.time || '—'}</div><div class="match-vs-badge">ضد</div>`;
         statusBadge = `<span class="match-status-badge status-upcoming">قادمة</span>`;
+    } else if (isLive) {
+        const hs = match.homeScore !== null && match.homeScore !== undefined ? match.homeScore : '0';
+        const as = match.awayScore !== null && match.awayScore !== undefined ? match.awayScore : '0';
+        const statusText = match.statusAr || match.status || 'مباشر';
+
+        centerHtml  = `<div class="match-time-badge" style="font-family: 'Cairo', sans-serif; font-weight: 700; font-size: 0.85rem;">${match.time || ''}</div>
+                       <div class="match-score-badge live">
+                           <span class="score-num">${hs}</span>
+                           <span class="score-divider">-</span>
+                           <span class="score-num">${as}</span>
+                       </div>`;
+        statusBadge = `<span class="match-status-badge status-live">${statusText}</span>`;
     } else {
-        const hs = match.homeScore !== null && match.homeScore !== undefined ? match.homeScore : '-';
-        const as = match.awayScore !== null && match.awayScore !== undefined ? match.awayScore : '-';
-        const liveClass = isLive ? 'live' : '';
-        centerHtml  = `<div class="match-time-badge">${match.time}</div>
-                       <div class="match-score-badge ${liveClass}">
+        const hs = match.homeScore !== null && match.homeScore !== undefined ? match.homeScore : '0';
+        const as = match.awayScore !== null && match.awayScore !== undefined ? match.awayScore : '0';
+        centerHtml  = `<div class="match-time-badge" style="font-family: 'Cairo', sans-serif; font-weight: 700; font-size: 0.85rem;">${match.time || ''}</div>
+                       <div class="match-score-badge">
                            <span class="score-num">${hs}</span>
                            <span class="score-divider">-</span>
                            <span class="score-num">${as}</span>
                        </div>`;
         const statusText = match.statusAr || match.status;
-        statusBadge = `<span class="match-status-badge ${isLive ? 'status-live' : 'status-finished'}">${statusText}</span>`;
+        statusBadge = `<span class="match-status-badge status-finished">${statusText}</span>`;
     }
 
     const hasPenalty = match.homePenaltyScore !== null && match.homePenaltyScore !== undefined &&
@@ -392,8 +387,10 @@ function matchRowHtml(match) {
     const homeAttr = match.homeId ? `data-team-id="${match.homeId}" data-team-name="${match.homeTeam}" style="cursor:pointer;"` : '';
     const awayAttr = match.awayId ? `data-team-id="${match.awayId}" data-team-name="${match.awayTeam}" style="cursor:pointer;"` : '';
 
+    const statusStr = `${match.isLive ? 'L' : match.isFinished ? 'F' : 'U'}_${match.homeScore}_${match.awayScore}_${match.statusAr || ''}`;
+
     return `
-        <div class="match-row-item" data-id="${match.id}" style="cursor:pointer;">
+        <div class="match-row-item" data-id="${match.id}" data-status-str="${statusStr}" style="cursor:pointer;">
             <div class="match-team home" ${homeAttr}>
                 <span class="match-team-name">${match.homeTeam}</span>
                 <div class="team-logo-container">${renderLogo(match.homeLogo, match.homeTeam)}</div>
@@ -410,6 +407,7 @@ function matchRowHtml(match) {
             </div>
         </div>`;
 }
+
 
 // ── UI helpers ────────────────────────────────────────────────
 function showLoading() {

@@ -22,7 +22,7 @@
     <meta name="twitter:title" content="تفاصيل المباراة - كورة ليجند">
     <meta name="twitter:description" content="تعرف على تفاصيل وملخص وإحصائيات المباراة على موقع كورة ليجند Kora Legend.">
     <meta name="twitter:image" content="https://koralegend.com/logo.png">
-    <link rel="stylesheet" href="styles.min.css?v=2.2">
+    <link rel="stylesheet" href="styles.min.css?v=2.3">
     <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8486549501295296" crossorigin="anonymous"></script>
     <style>
@@ -274,105 +274,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* 1. Events Timeline Styles */
-        .events-timeline {
-            position: relative;
-            margin: var(--spacing-md) 0;
-        }
-        
-        .events-timeline::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 50%;
-            width: 2px;
-            background: rgba(255, 255, 255, 0.08);
-            transform: translateX(-50%);
-        }
-        
-        .timeline-event-wrapper {
-            display: flex;
-            margin-bottom: var(--spacing-lg);
-            position: relative;
-            align-items: center;
-            width: 100%;
-        }
-        
-        .timeline-event-item {
-            width: 44%;
-            padding: 1rem;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-            transition: all 0.3s ease;
-        }
-        
-        .timeline-event-item:hover {
-            transform: translateY(-2px);
-            border-color: rgba(255, 255, 255, 0.15);
-        }
-        
-        /* RTL: home = right side, away = left side */
-        .timeline-event-wrapper.home {
-            flex-direction: row-reverse;
-        }
-        
-        .timeline-event-wrapper.away {
-            flex-direction: row;
-        }
-        
-        /* Spacer to push card to correct side */
-        .timeline-event-wrapper::before {
-            content: '';
-            flex: 1;
-        }
-        
-        .timeline-minute-badge {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            background: var(--dark-bg);
-            border: 2px solid var(--primary-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
-            font-size: 0.85rem;
-            color: var(--text-primary);
-            z-index: 2;
-            box-shadow: 0 0 10px rgba(27, 117, 240, 0.3);
-            flex-shrink: 0;
-        }
-        
-        .timeline-event-wrapper.away .timeline-minute-badge {
-            border-color: var(--secondary-color);
-            box-shadow: 0 0 10px rgba(255, 81, 0, 0.3);
-        }
-        
-        .event-type-icon {
-            margin-left: 8px;
-            font-size: 1.15rem;
-            display: inline-block;
-            vertical-align: middle;
-        }
-        
-        .event-player {
-            font-weight: 700;
-            color: var(--text-primary);
-            font-size: 1rem;
-        }
-        
-        .event-detail {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            margin-top: 4px;
-        }
+        /* 1. Events Timeline Styles (Moved to styles.css) */
         
         /* 2. Stats Panel Styles */
         .stats-card {
@@ -564,31 +466,6 @@
                 grid-template-columns: 1fr;
                 gap: var(--spacing-md);
             }
-            
-            .events-timeline::before {
-                left: 20px;
-                transform: none;
-            }
-            
-            .timeline-event-wrapper,
-            .timeline-event-wrapper.home,
-            .timeline-event-wrapper.away {
-                flex-direction: row;
-                padding-left: 50px;
-            }
-            
-            .timeline-event-wrapper::before {
-                display: none;
-            }
-            
-            .timeline-event-item {
-                width: 100%;
-            }
-            
-            .timeline-minute-badge {
-                left: 0;
-                transform: none;
-            }
         }
 
         @media (max-width: 480px) {
@@ -735,10 +612,10 @@
     </footer>
 
     <!-- Database Scripts -->
-    <script src="matches-data.js" defer></script>
-    <script src="match-details-data.js" defer></script>
-    <script src="script.js?v=2.2" defer></script>
-    <script src="match-details.js?v=2.1" defer></script>
-    <script src="live-details.js?v=2.1" defer></script>
+    <script src="matches-data.js?v=2.3" defer></script>
+    <script src="match-details-data.js?v=2.3" defer></script>
+    <script src="script.js?v=2.3" defer></script>
+    <script src="match-details.js?v=2.3" defer></script>
+    <script src="live-details.js?v=2.3" defer></script>
 </body>
 </html>

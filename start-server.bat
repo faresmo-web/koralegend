@@ -1,10 +1,10 @@
 @echo off
 title KoraLegend Live Server
-cd /d "c:\Users\EssaM\Documents\GitHub\koralegend"
+cd /d "%~dp0"
 echo ==========================================
 echo   KoraLegend Live Server
-echo   http://localhost:3001
+echo   http://localhost:3000
 echo ==========================================
 echo.
-node server.js --port=3001
+node server.js
 pause

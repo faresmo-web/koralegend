@@ -157,8 +157,8 @@ function renderHeroCard(match, details, dateType) {
     if (isLive) statusClass = 'live';
     else if (isUpcoming) statusClass = 'upcoming';
     
-    const homeScore = match.homeScore !== null && match.homeScore !== undefined ? match.homeScore : '-';
-    const awayScore = match.awayScore !== null && match.awayScore !== undefined ? match.awayScore : '-';
+    const homeScore = match.homeScore !== null && match.homeScore !== undefined ? match.homeScore : '0';
+    const awayScore = match.awayScore !== null && match.awayScore !== undefined ? match.awayScore : '0';
     
     const homePenalty = match.homePenaltyScore !== undefined && match.homePenaltyScore !== null ? match.homePenaltyScore : (details?.homePenaltyScore ?? null);
     const awayPenalty = match.awayPenaltyScore !== undefined && match.awayPenaltyScore !== null ? match.awayPenaltyScore : (details?.awayPenaltyScore ?? null);
@@ -170,6 +170,35 @@ function renderHeroCard(match, details, dateType) {
             <span style="font-family: 'Orbitron', sans-serif; letter-spacing: 1px;">${homePenalty} - ${awayPenalty}</span>
            </div>`
         : '';
+
+    // Build center section based on match state
+    let centerInnerHtml;
+    if (isUpcoming) {
+        // Upcoming: show time prominently, no score
+        centerInnerHtml = `
+            <div style="font-family: 'Cairo', 'Orbitron', sans-serif; font-size: 1.6rem; font-weight: 800; color: var(--primary-color); letter-spacing: 1px; text-shadow: 0 0 15px rgba(27, 117, 240, 0.4); direction: rtl;">
+                ${match.time || '—'}
+            </div>
+            <div class="match-hero-score" style="font-size: 1.8rem; opacity: 0.3;">
+                <span>—</span>
+                <span style="font-size: 1rem;">ضد</span>
+                <span>—</span>
+            </div>
+            <span class="match-hero-status ${statusClass}">${match.statusAr || match.status}</span>
+        `;
+    } else {
+        // Live or Finished: show score prominently, time below
+        centerInnerHtml = `
+            <div class="match-hero-score">
+                <span class="${isLive ? 'score-live-pulse' : ''}">${homeScore}</span>
+                <span>-</span>
+                <span class="${isLive ? 'score-live-pulse' : ''}">${awayScore}</span>
+            </div>
+            <span class="match-hero-status ${statusClass}">${match.statusAr || match.status}</span>
+            ${penaltyHtml}
+            <span style="font-size: 0.85rem; color: var(--text-secondary); font-family: 'Cairo', 'Orbitron', sans-serif; margin-top: 4px; direction: rtl;">${match.time || ''}</span>
+        `;
+    }
 
     // Get info values
     const channel = details?.info?.channel || (currentLang === 'ar' ? 'غير متوفر' : 'N/A');
@@ -202,16 +231,9 @@ function renderHeroCard(match, details, dateType) {
                 ${renderLogo(match.homeLogo, match.homeTeam)}
             </div>
             
-            <!-- Center Score -->
+            <!-- Center Score / Time -->
             <div class="match-hero-center">
-                <div class="match-hero-score">
-                    <span class="${isLive ? 'score-live-pulse' : ''}">${homeScore}</span>
-                    <span>-</span>
-                    <span class="${isLive ? 'score-live-pulse' : ''}">${awayScore}</span>
-                </div>
-                <span class="match-hero-status ${statusClass}">${match.status}</span>
-                ${penaltyHtml}
-                <span style="font-size: 0.85rem; color: var(--text-secondary); font-family: 'Orbitron', sans-serif; margin-top: 4px;">${match.time}</span>
+                ${centerInnerHtml}
             </div>
             
             <!-- Away -->
@@ -228,6 +250,10 @@ function renderHeroCard(match, details, dateType) {
                 <span class="meta-label">الجولة</span>
                 <span class="meta-value">${round}</span>
             </div>` : ''}
+            <div class="meta-item">
+                <span class="meta-label" data-en="Match Time" data-ar="توقيت المباراة">توقيت المباراة</span>
+                <span class="meta-value" style="font-family: 'Cairo', sans-serif; font-weight: 700; color: var(--primary-color); font-size: 1.1rem; letter-spacing: 0.5px; direction: rtl;">${match.time || 'غير متوفر'}</span>
+            </div>
             <div class="meta-item">
                 <span class="meta-label" data-en="Broadcaster" data-ar="القناة الناقلة">القناة الناقلة</span>
                 <span class="meta-value">${channel}</span>
@@ -284,47 +310,100 @@ function renderEvents(details) {
     });
     
     sortedEvents.forEach(evt => {
-        // Skip referee metadata or 0 min metadata if it's empty
-        if (evt.min === '0' && !evt.descText) return;
-        
+        // Skip referee metadata or empty 0 min metadata
+        if (evt.min === '0' && !evt.descText && !evt.score) return;
+
         const wrapper = document.createElement('div');
+
+        if (evt.type === 'milestone') {
+            wrapper.className = `timeline-milestone`;
+            let iconHtml = '';
+            if (evt.descText && evt.descText.includes('بدأت')) {
+                iconHtml = `<div class="milestone-icon">⏱️</div>`;
+            } else if (evt.score) {
+                iconHtml = `<div class="milestone-score">${evt.score}</div>`;
+            }
+            wrapper.innerHTML = `
+                ${iconHtml}
+                <div class="milestone-text">${evt.descText}</div>
+            `;
+            container.appendChild(wrapper);
+            return;
+        }
+
         wrapper.className = `timeline-event-wrapper ${evt.team}`;
         
-        let icon = '📢';
-        let detailText = '';
-        let playerText = evt.descText;
+        let icon = '';
+        let iconClass = '';
         
         if (evt.type === 'goal') {
             icon = '⚽';
-            detailText = currentLang === 'ar' ? 'هدف لصالح الفريق' : 'Goal Scored';
+            iconClass = 'goal-icon';
         } else if (evt.type === 'penalty') {
             icon = '⚽';
-            playerText += currentLang === 'ar' ? ' (ركلة جزاء)' : ' (Pen)';
-            detailText = currentLang === 'ar' ? 'ركلة جزاء ناجحة' : 'Penalty Goal';
+            iconClass = 'goal-icon';
         } else if (evt.type === 'own-goal') {
             icon = '⚽';
-            playerText += currentLang === 'ar' ? ' (هدف في مرماه)' : ' (Own Goal)';
-            detailText = currentLang === 'ar' ? 'هدف عكسي' : 'Own Goal';
+            iconClass = 'goal-icon-own';
         } else if (evt.type === 'yellow') {
             icon = '🟨';
-            detailText = currentLang === 'ar' ? 'بطاقة صفراء' : 'Yellow Card';
+            iconClass = 'card-icon';
         } else if (evt.type === 'red') {
             icon = '🟥';
-            detailText = currentLang === 'ar' ? 'بطاقة حمراء' : 'Red Card';
+            iconClass = 'card-icon';
         } else if (evt.type === 'sub') {
             icon = '🔄';
-            detailText = currentLang === 'ar' ? 'تبديل' : 'Substitution';
+            iconClass = 'sub-icon';
+        } else {
+            icon = '📢';
+            iconClass = 'default-icon';
+        }
+
+        let mainPlayer = evt.descText || '';
+        let subPlayer = '';
+        
+        // Parse "Main Player (Sub Player)"
+        const match = evt.descText?.match(/^(.*?)\s*\((.*?)\)$/);
+        if (match) {
+            mainPlayer = match[1].trim();
+            subPlayer = match[2].trim();
+            
+            // Fix sub icon parsing if it's "sub in <-> sub out"
+            if (evt.type === 'sub' && evt.descText.includes('↔')) {
+                const parts = evt.descText.split('↔');
+                if (parts.length === 2) {
+                    mainPlayer = parts[0].trim();
+                    subPlayer = parts[1].trim();
+                }
+            }
+        } else if (evt.type === 'sub' && evt.descText?.includes('↔')) {
+            const parts = evt.descText.split('↔');
+            mainPlayer = parts[0].trim();
+            subPlayer = parts[1].trim();
         }
         
-        wrapper.innerHTML = `
-            <div class="timeline-minute-badge">${evt.min}'</div>
-            <div class="timeline-event-item">
-                <div>
-                    <span class="event-type-icon">${icon}</span>
-                    <span class="event-player">${playerText}</span>
+        if (evt.type === 'penalty' && !subPlayer) {
+            subPlayer = currentLang === 'ar' ? 'ركلة جزاء' : 'Penalty';
+        } else if (evt.type === 'own-goal' && !subPlayer) {
+            subPlayer = currentLang === 'ar' ? 'هدف في مرماه' : 'Own Goal';
+        }
+
+        const infoHtml = `
+            <div class="timeline-event-info">
+                <div class="event-players">
+                    <div class="event-main-player">${mainPlayer}</div>
+                    ${subPlayer ? `<div class="event-sub-player">${subPlayer}</div>` : ''}
                 </div>
-                <div class="event-detail">${detailText}</div>
+                <div class="event-icon ${iconClass}">${icon}</div>
             </div>
+        `;
+
+        wrapper.innerHTML = `
+            <div class="timeline-event-content">
+                ${infoHtml}
+            </div>
+            <div class="timeline-minute-badge"><span class="min-tick">'</span>${evt.min}</div>
+            <div style="grid-column: ${evt.team === 'home' ? '3' : '1'}"></div>
         `;
         
         container.appendChild(wrapper);

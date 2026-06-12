@@ -8,7 +8,7 @@ async function test() {
         for (const m of matches) {
             console.log(`- ID: ${m.id}, League: ${m.league}, Teams: ${m.homeTeam} vs ${m.awayTeam}, Status: ${m.status}, isLive: ${m.isLive}, isFinished: ${m.isFinished}`);
         }
-    } catch(e) {
+    } catch (e) {
         console.error(e);
     }
 }

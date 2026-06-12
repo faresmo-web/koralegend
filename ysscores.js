@@ -52,6 +52,9 @@ async function fetchMatchesForDate(dateStr, dateLabel) {
             'Accept': 'text/html, */*; q=0.01',
             'Accept-Language': 'ar,en;q=0.9',
             'Accept-Encoding': 'identity',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
         },
         timeout: 15000,
         responseType: 'arraybuffer'
@@ -83,12 +86,18 @@ async function fetchMatchesForDate(dateStr, dateLabel) {
 
             // Parse inner HTML for time, score, status
             const resultWrap = $(matchEl).find('.result-wrap');
-            const timeEl = resultWrap.find('.match-date, .match-time-before');
-            const time = timeEl.text().trim() || '';
+            const timeEl = resultWrap.find('.match-date, .match-time-before, .match-time');
+            let time = timeEl.text().trim() || '';
 
+            // If time contains a dash and we have a finished match, it likely extracted the score
+            if (time.includes('-') && time.match(/\d+/)) {
+                time = '';
+            }
+
+            // homeScore / awayScore
             let homeScore = null;
             let awayScore = null;
-            const scoreEls = resultWrap.find('.first-team-result, .second-team-result, .score-num, .result-score .score');
+            const scoreEls = $(matchEl).find('.first-team-result, .second-team-result, .score-num, .match-result-num, .team-result');
             if (scoreEls.length >= 2) {
                 const h = parseInt(scoreEls.eq(0).text().trim());
                 const a = parseInt(scoreEls.eq(1).text().trim());
@@ -120,9 +129,46 @@ async function fetchMatchesForDate(dateStr, dateLabel) {
             }
 
             if (isLive) {
-                const liveMinEl = $(matchEl).find('.live-minute, .match-minute');
-                const liveMin = liveMinEl.text().trim();
-                statusAr = liveMin ? `${liveMin}'` : 'مباشر';
+                const liveMinEl = $(matchEl).find('.live-minute, .match-minute, .live-time, .live, .result-status-text');
+                const dataMinutes = $(matchEl).find('[data-minutes]').attr('data-minutes');
+                
+                // Extract just the numbers if possible, or use the whole text
+                let liveMin = '';
+                if (dataMinutes && parseInt(dataMinutes) > 0) {
+                    liveMin = dataMinutes + "'";
+                } else {
+                    liveMin = liveMinEl.text().replace(/[^\d']/g, '').trim();
+                    if (!liveMin) {
+                        const fullText = liveMinEl.text().trim();
+                        if (fullText.includes("'")) liveMin = fullText;
+                    }
+                }
+                
+                if (liveMin && liveMin.match(/\d/)) {
+                    statusAr = liveMin.includes("'") ? liveMin : `${liveMin}'`;
+                } else if (statusText && statusText !== 'مباشر' && !statusText.includes('انته')) {
+                    // Fall back to statusText if it contains something useful like 'الشوط الثاني'
+                    statusAr = statusText;
+                } else {
+                    statusAr = 'مباشر';
+                }
+
+                // Check for extra time (stoppage time)
+                const extraTimeEl = $(matchEl).find('.extra-time');
+                if (extraTimeEl.length && extraTimeEl.attr('hidden') === undefined) {
+                    const extraText = extraTimeEl.text();
+                    // The text usually looks like "+00:00 / 5" where 5 is the stoppage time
+                    const extraMatch = extraText.match(/\/\s*(\d+)/);
+                    if (extraMatch) {
+                        statusAr += ` +${extraMatch[1]}`;
+                    } else {
+                        // Fallback if the format is just "+5"
+                        const fallbackMatch = extraText.match(/\+\s*(\d+)/);
+                        if (fallbackMatch && parseInt(fallbackMatch[1]) > 0) {
+                            statusAr += ` +${fallbackMatch[1]}`;
+                        }
+                    }
+                }
             }
 
             // homePenaltyScore / awayPenaltyScore
@@ -224,7 +270,19 @@ async function fetchMatchDetails(matchUrl) {
         // Parse Events
         const events = [];
         $('.match-event-item').each((i, el) => {
-            if ($(el).hasClass('start-end-match')) return;
+            if ($(el).hasClass('start-end-match')) {
+                let fullText = $(el).text().trim();
+                let scoreText = '';
+                const scoreMatch = fullText.match(/\d+\s*-\s*\d+/);
+                if (scoreMatch) {
+                    scoreText = scoreMatch[0];
+                    fullText = fullText.replace(scoreText, '').trim();
+                }
+                if (fullText || scoreText) {
+                    events.push({ min: '0', type: 'milestone', player: fullText, descText: fullText, score: scoreText, team: 'center' });
+                }
+                return;
+            }
 
             const commPop = $(el).find('a.comm_pop');
             if (commPop.length === 0) return;
