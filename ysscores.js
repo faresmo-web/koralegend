@@ -235,6 +235,7 @@ async function fetchMatchDetails(matchUrl) {
             away: { starters: [], subs: [], coach: '', formation: '' },
         },
         info: { channel: '', stadium: '', referee: '' },
+        standings: null,
     };
 
     if (!matchUrl || !matchUrl.startsWith('http')) return empty;
@@ -350,6 +351,7 @@ async function fetchMatchDetails(matchUrl) {
             home: { starters: [], subs: [], coach: '', formation: '' },
             away: { starters: [], subs: [], coach: '', formation: '' },
         };
+        let standings = null;
 
         const lineupTabText = $('.lineup_tab').text().trim();
         lineups.confirmed = lineupTabText ? !lineupTabText.includes('المتوقعة') : false;
@@ -444,9 +446,25 @@ async function fetchMatchDetails(matchUrl) {
             } catch (le) {
                 console.error('[ysscores] Failed to fetch or parse match_lineup JSON:', le.message);
             }
+
+            // Fetch standings / league rank
+            try {
+                const rankUrl = `${BASE_URL}/get_league_rank?match_code=${matchCode}`;
+                const rRank = await axios.get(rankUrl, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                        'Referer': `${BASE_URL}/index`,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    timeout: 10000
+                });
+                standings = rRank.data;
+            } catch (re) {
+                console.error('[ysscores] Failed to fetch or parse get_league_rank JSON:', re.message);
+            }
         }
 
-        return { stats, events, lineups, info };
+        return { stats, events, lineups, info, standings };
     } catch (e) {
         console.error('[ysscores] fetchMatchDetails error:', e.message);
         return empty;

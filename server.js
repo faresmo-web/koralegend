@@ -26,6 +26,78 @@ const HEADERS  = {
     'Referer':         'https://www.kooora.com/',
 };
 
+// ── Streams (Admin) Setup ────────────────────────────────────
+const STREAMS_FILE   = path.join(__dirname, 'streams.json');
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'kora2024';
+
+function loadStreams() {
+    try {
+        if (fs.existsSync(STREAMS_FILE)) {
+            return JSON.parse(fs.readFileSync(STREAMS_FILE, 'utf8'));
+        }
+    } catch { }
+    return {};
+}
+
+function saveStreams(streams) {
+    try { fs.writeFileSync(STREAMS_FILE, JSON.stringify(streams, null, 2), 'utf8'); } catch { }
+}
+
+function checkAdminAuth(req) {
+    const authHeader = req.headers['x-admin-password'] || '';
+    return authHeader === ADMIN_PASSWORD;
+}
+
+// GET  /api/streams?matchId=xxx  → public, returns stream for one match
+// GET  /api/admin/streams        → admin, returns all streams
+// POST /api/admin/streams        → admin, upsert stream
+// DELETE /api/admin/streams?matchId=xxx → admin, remove stream
+
+function handleGetStream(req, res) {
+    const url     = new URL(req.url, 'http://localhost');
+    const matchId = url.searchParams.get('matchId') || '';
+    if (!matchId) return sendJSON(res, { stream: null });
+    const streams = loadStreams();
+    sendJSON(res, { stream: streams[matchId] || null });
+}
+
+function handleAdminGetStreams(req, res) {
+    if (!checkAdminAuth(req)) return sendError(res, 401, 'Unauthorized');
+    sendJSON(res, loadStreams());
+}
+
+async function handleAdminUpsertStream(req, res) {
+    if (!checkAdminAuth(req)) return sendError(res, 401, 'Unauthorized');
+    try {
+        const body    = await readBody(req);
+        const matchId = body.matchId || '';
+        if (!matchId) return sendError(res, 400, 'matchId required');
+        const streams = loadStreams();
+        streams[matchId] = {
+            mainStream:   body.mainStream || { iframeUrl: '', externalUrl: '' },
+            zones:        Array.isArray(body.zones) ? body.zones : [], // highlights/goals
+            homeTeam:     body.homeTeam  || '',
+            awayTeam:     body.awayTeam  || '',
+            updatedAt:    new Date().toISOString(),
+        };
+        saveStreams(streams);
+        sendJSON(res, { ok: true, stream: streams[matchId] });
+    } catch (e) {
+        sendError(res, 400, e.message);
+    }
+}
+
+function handleAdminDeleteStream(req, res) {
+    if (!checkAdminAuth(req)) return sendError(res, 401, 'Unauthorized');
+    const url     = new URL(req.url, 'http://localhost');
+    const matchId = url.searchParams.get('matchId') || '';
+    if (!matchId) return sendError(res, 400, 'matchId required');
+    const streams = loadStreams();
+    delete streams[matchId];
+    saveStreams(streams);
+    sendJSON(res, { ok: true });
+}
+
 // ── VAPID / Push Setup ───────────────────────────────────────
 const VAPID_FILE   = path.join(__dirname, 'vapid-keys.json');
 const SUBS_FILE    = path.join(__dirname, 'subscriptions.json');
@@ -140,11 +212,18 @@ function mapStatus(m) {
 
 // ── ysscores: fetch date-based matches ─────────────────────
 function ysscoresDateStr(dateStr) {
-    if (dateStr === 'today') return new Date().toISOString().split('T')[0];
-    const d = new Date();
-    if (dateStr === 'yesterday') d.setDate(d.getDate() - 1);
-    if (dateStr === 'tomorrow') d.setDate(d.getDate() + 1);
-    return d.toISOString().split('T')[0];
+    const getLocalCairoDateObj = (offsetDays = 0) => {
+        const d = new Date();
+        if (offsetDays !== 0) {
+            d.setDate(d.getDate() + offsetDays);
+        }
+        return d.toLocaleDateString('en-CA', { timeZone: TIMEZONE });
+    };
+
+    if (dateStr === 'today') return getLocalCairoDateObj(0);
+    if (dateStr === 'yesterday') return getLocalCairoDateObj(-1);
+    if (dateStr === 'tomorrow') return getLocalCairoDateObj(1);
+    return dateStr;
 }
 
 async function fetchMatchesYSScores(dateStr = 'today') {
@@ -1239,6 +1318,14 @@ const server = http.createServer((req, res) => {
     if (url === '/api/vapid-public-key')  return handleVapidPublicKey(req, res);
     if (url === '/api/subscribe')         return handleSubscribe(req, res);
     if (url === '/api/unsubscribe')       return handleUnsubscribe(req, res);
+    // ── Streams API ──
+    if (url === '/api/streams')           return handleGetStream(req, res);
+    if (url === '/api/admin/streams') {
+        if (req.method === 'GET')    return handleAdminGetStreams(req, res);
+        if (req.method === 'POST')   return handleAdminUpsertStream(req, res);
+        if (req.method === 'DELETE') return handleAdminDeleteStream(req, res);
+        return sendError(res, 405, 'Method Not Allowed');
+    }
     if (url === '/favicon.ico')           { res.writeHead(204); res.end(); return; }
     if (url === '/sitemap-matches.xml')   return handleSitemapMatches(req, res);
     if (url === '/sitemap-news.xml')      return handleSitemapNews(req, res);

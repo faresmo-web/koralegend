@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم — كورة ليجند</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:           #06091a;
+            --surface:      #0d1432;
+            --surface2:     #131b3e;
+            --border:       rgba(255,255,255,0.08);
+            --primary:      #1b75f0;
+            --primary-glow: rgba(27,117,240,0.35);
+            --accent:       #ff5100;
+            --success:      #10b981;
+            --danger:       #ef4444;
+            --text:         #e8eaf6;
+            --text-dim:     #8892b0;
+            --gold:         #ffc107;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+        body::before {
+            content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+            background:
+                radial-gradient(ellipse 80% 50% at 20% 20%, rgba(27,117,240,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 40% at 80% 80%, rgba(255,81,0,0.06) 0%, transparent 60%);
+        }
+
+        /* ─── Login ─── */
+        #loginScreen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 100; background: var(--bg); }
+        .login-card {
+            background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+            border: 1px solid var(--border); border-radius: 24px; padding: 3rem 2.5rem;
+            width: 100%; max-width: 420px; text-align: center; position: relative; overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(27,117,240,0.1);
+        }
+        .login-card::before {
+            content: ''; position: absolute; top: -60px; left: -60px; width: 180px; height: 180px;
+            background: radial-gradient(circle, rgba(27,117,240,0.15), transparent 70%); border-radius: 50%;
+        }
+        .login-logo { font-size: 3rem; margin-bottom: 0.5rem; }
+        .login-title { font-size: 1.5rem; font-weight: 900; background: linear-gradient(135deg, #fff 0%, var(--primary) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem; }
+        .login-subtitle { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 2rem; }
+        .input-group { margin-bottom: 1.25rem; }
+        .input-group input { width: 100%; padding: 0.9rem 1.25rem; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-family: 'Cairo', sans-serif; font-size: 1rem; outline: none; transition: border-color 0.3s, box-shadow 0.3s; text-align: center; letter-spacing: 3px; }
+        .input-group input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+        .btn-login { width: 100%; padding: 1rem; background: linear-gradient(135deg, var(--primary) 0%, #0d5cd4 100%); border: none; border-radius: 12px; color: #fff; font-family: 'Cairo', sans-serif; font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 20px var(--primary-glow); }
+        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 30px var(--primary-glow); }
+        .login-error { color: var(--danger); font-size: 0.85rem; margin-top: 0.75rem; display: none; }
+
+        /* ─── Header ─── */
+        #adminPanel { display: none; }
+        .admin-header { position: sticky; top: 0; z-index: 50; background: rgba(6,9,26,0.9); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+        .header-brand { display: flex; align-items: center; gap: 0.75rem; }
+        .header-brand .icon { font-size: 1.6rem; }
+        .header-brand .brand-text h1 { font-size: 1.1rem; font-weight: 900; background: linear-gradient(90deg, #fff 0%, var(--primary) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header-brand .brand-text p { font-size: 0.75rem; color: var(--text-dim); }
+        .header-actions { display: flex; align-items: center; gap: 0.75rem; }
+        .status-badge { display: flex; align-items: center; gap: 6px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); border-radius: 20px; padding: 0.35rem 0.85rem; font-size: 0.8rem; color: var(--success); font-weight: 600; }
+        .status-dot { width: 7px; height: 7px; background: var(--success); border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
+        .btn-logout { padding: 0.45rem 1rem; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); border-radius: 10px; color: var(--danger); font-family: 'Cairo', sans-serif; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.25s; }
+        .btn-logout:hover { background: rgba(239,68,68,0.2); }
+
+        /* ─── Content ─── */
+        .admin-content { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; position: relative; z-index: 1; }
+
+        /* ─── Stats ─── */
+        .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1px solid var(--border); border-radius: 16px; padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 1rem; }
+        .stat-icon { font-size: 2rem; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; border-radius: 14px; background: rgba(27,117,240,0.12); flex-shrink: 0; }
+        .stat-info .num { font-size: 1.8rem; font-weight: 900; color: #fff; }
+        .stat-info .lbl { font-size: 0.8rem; color: var(--text-dim); }
+
+        /* ─── Section Title ─── */
+        .section-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.6rem; }
+        .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+        /* ─── Match Cards ─── */
+        .matches-grid { display: grid; gap: 1rem; }
+        .match-admin-card { background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; transition: border-color 0.3s, box-shadow 0.3s; }
+        .match-admin-card.has-stream { border-color: rgba(27,117,240,0.4); box-shadow: 0 0 20px rgba(27,117,240,0.1); }
+        .match-card-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; cursor: pointer; user-select: none; gap: 0.75rem; }
+        .match-card-header:hover { background: rgba(255,255,255,0.02); }
+        .match-teams { display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 0; }
+        .team-logo-sm { width: 36px; height: 36px; border-radius: 50%; object-fit: contain; background: rgba(255,255,255,0.05); flex-shrink: 0; }
+        .team-logo-placeholder { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+        .match-vs-info { min-width: 0; }
+        .match-teams-name { font-weight: 700; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .match-meta-sm { font-size: 0.75rem; color: var(--text-dim); display: flex; align-items: center; gap: 0.4rem; margin-top: 2px; flex-wrap: wrap; }
+        .badge-live { background: rgba(255,81,0,0.15); border: 1px solid rgba(255,81,0,0.35); color: var(--accent); border-radius: 6px; padding: 2px 8px; font-size: 0.7rem; font-weight: 700; }
+        .badge-zones { background: rgba(27,117,240,0.15); border: 1px solid rgba(27,117,240,0.35); color: var(--primary); border-radius: 6px; padding: 2px 8px; font-size: 0.7rem; font-weight: 700; display: none; align-items: center; gap: 4px; }
+        .badge-zones.visible { display: flex; }
+        .card-toggle { color: var(--text-dim); font-size: 1.1rem; transition: transform 0.3s; flex-shrink: 0; }
+        .match-admin-card.open .card-toggle { transform: rotate(180deg); }
+
+        /* ─── Card Body ─── */
+        .match-card-body { display: none; padding: 0 1.25rem 1.25rem; border-top: 1px solid var(--border); }
+        .match-admin-card.open .match-card-body { display: block; }
+
+        /* ─── Zones List ─── */
+        .zones-list { display: flex; flex-direction: column; gap: 0.85rem; margin-top: 1rem; }
+        .zone-item {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1rem;
+            position: relative;
+        }
+        .zone-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+        .zone-num { font-size: 0.8rem; font-weight: 700; color: var(--primary); background: rgba(27,117,240,0.1); padding: 3px 10px; border-radius: 8px; }
+        .btn-remove-zone { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: var(--danger); border-radius: 8px; padding: 4px 10px; font-size: 0.78rem; cursor: pointer; font-family: 'Cairo', sans-serif; transition: all 0.2s; }
+        .btn-remove-zone:hover { background: rgba(239,68,68,0.2); }
+
+        .form-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-dim); margin-bottom: 0.35rem; }
+        .form-input { width: 100%; padding: 0.7rem 1rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'Cairo', sans-serif; font-size: 0.88rem; outline: none; transition: border-color 0.25s, box-shadow 0.25s; direction: ltr; margin-bottom: 0.6rem; }
+        .form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+        .form-input::placeholder { color: rgba(255,255,255,0.2); }
+        .form-input.rtl { direction: rtl; }
+        .form-hint { font-size: 0.72rem; color: var(--text-dim); margin-top: -0.4rem; margin-bottom: 0.6rem; }
+
+        .btn-add-zone {
+            width: 100%; margin-top: 0.75rem;
+            padding: 0.65rem;
+            background: rgba(16,185,129,0.08);
+            border: 1px dashed rgba(16,185,129,0.35);
+            border-radius: 12px;
+            color: var(--success);
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.88rem; font-weight: 700;
+            cursor: pointer; transition: all 0.25s;
+        }
+        .btn-add-zone:hover { background: rgba(16,185,129,0.15); }
+
+        .form-actions { display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; }
+        .btn-save { flex: 1; padding: 0.75rem; background: linear-gradient(135deg, var(--primary) 0%, #0d5cd4 100%); border: none; border-radius: 10px; color: #fff; font-family: 'Cairo', sans-serif; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.25s; box-shadow: 0 4px 15px var(--primary-glow); display: flex; align-items: center; justify-content: center; gap: 0.5rem; min-width: 120px; }
+        .btn-save:hover { transform: translateY(-1px); box-shadow: 0 6px 20px var(--primary-glow); }
+        .btn-delete { padding: 0.75rem 1.25rem; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); border-radius: 10px; color: var(--danger); font-family: 'Cairo', sans-serif; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.25s; }
+        .btn-delete:hover { background: rgba(239,68,68,0.2); }
+        .btn-ext { padding: 0.75rem 1.25rem; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.25); border-radius: 10px; color: var(--success); font-family: 'Cairo', sans-serif; font-size: 0.9rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; transition: all 0.25s; }
+        .btn-ext:hover { background: rgba(16,185,129,0.18); }
+
+        /* ─── Streams Table ─── */
+        .streams-table-wrap { background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1px solid var(--border); border-radius: 18px; overflow: hidden; margin-bottom: 2rem; }
+        .streams-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+        .streams-table thead tr { background: rgba(255,255,255,0.03); }
+        .streams-table th { padding: 0.8rem 1rem; color: var(--text-dim); font-weight: 600; text-align: right; border-bottom: 1px solid var(--border); }
+        .streams-table td { padding: 0.75rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .streams-table tr:last-child td { border-bottom: none; }
+        .streams-table tr:hover td { background: rgba(255,255,255,0.02); }
+        .empty-state { text-align: center; padding: 2rem; color: var(--text-dim); font-size: 0.9rem; }
+
+        /* ─── Toast ─── */
+        .toast-container { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem; pointer-events: none; }
+        .toast { padding: 0.8rem 1.5rem; border-radius: 12px; font-size: 0.9rem; font-weight: 600; animation: toastIn 0.3s ease, toastOut 0.3s ease 2.5s forwards; white-space: nowrap; }
+        .toast.success { background: rgba(16,185,129,0.9); color: #fff; }
+        .toast.error   { background: rgba(239,68,68,0.9);  color: #fff; }
+        @keyframes toastIn  { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes toastOut { to   { opacity:0; transform:translateY(-10px); } }
+
+        /* ─── Preview Modal ─── */
+        .preview-modal { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); align-items: center; justify-content: center; }
+        .preview-modal.open { display: flex; }
+        .preview-inner { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; width: 95vw; max-width: 900px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; }
+        .preview-header { padding: 1rem 1.25rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
+        .preview-header h3 { font-weight: 700; }
+        .btn-close-modal { background: none; border: none; color: var(--text-dim); font-size: 1.4rem; cursor: pointer; line-height: 1; transition: color 0.2s; }
+        .btn-close-modal:hover { color: var(--danger); }
+        .preview-body { flex: 1; overflow: hidden; }
+        #previewIframe { width: 100%; height: 100%; min-height: 450px; border: none; }
+
+        /* ─── Loader ─── */
+        .loader { display: flex; align-items: center; justify-content: center; padding: 4rem; flex-direction: column; gap: 1rem; color: var(--text-dim); }
+        .spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 600px) { .stats-bar { grid-template-columns: 1fr; } .form-actions { flex-wrap: wrap; } .btn-save { flex: 1 0 100%; } }
+    </style>
+</head>
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="loginScreen">
+    <div class="login-card">
+        <div class="login-logo">⚽</div>
+        <h1 class="login-title">لوحة التحكم</h1>
+        <p class="login-subtitle">كورة ليجند — Admin Panel</p>
+        <div class="input-group">
+            <input type="password" id="passwordInput" placeholder="كلمة السر" autocomplete="current-password">
+        </div>
+        <button class="btn-login" onclick="doLogin()">دخول</button>
+        <p class="login-error" id="loginError">❌ كلمة السر غلط!</p>
+    </div>
+</div>
+
+<!-- ═══ PANEL ═══ -->
+<div id="adminPanel">
+    <header class="admin-header">
+        <div class="header-brand">
+            <span class="icon">🏟️</span>
+            <div class="brand-text">
+                <h1>KORA LEGEND</h1>
+                <p>لوحة تحكم الأدمن</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <div class="status-badge"><span class="status-dot"></span>متصل</div>
+            <button class="btn-logout" onclick="doLogout()">خروج 🚪</button>
+        </div>
+    </header>
+
+    <div class="admin-content">
+
+        <!-- Stats -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-icon">📺</div>
+                <div class="stat-info"><div class="num" id="statStreams">0</div><div class="lbl">روابط مشاهدة نشطة</div></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚽</div>
+                <div class="stat-info"><div class="num" id="statMatches">0</div><div class="lbl">مباريات متاحة</div></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🔴</div>
+                <div class="stat-info"><div class="num" id="statLive">0</div><div class="lbl">مباريات مباشرة</div></div>
+            </div>
+        </div>
+
+        <!-- Streams Table -->
+        <p class="section-title">📋 الروابط المحفوظة</p>
+        <div class="streams-table-wrap" id="streamsTableWrap">
+            <div class="empty-state">جاري التحميل...</div>
+        </div>
+
+        <!-- Matches -->
+        <p class="section-title">⚽ المباريات — إضافة / تعديل جونات المشاهدة</p>
+        <div class="matches-grid" id="matchesGrid">
+            <div class="loader"><div class="spinner"></div><span>جاري تحميل المباريات...</span></div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<div class="preview-modal" id="previewModal">
+    <div class="preview-inner">
+        <div class="preview-header">
+            <h3>📺 معاينة البث</h3>
+            <button class="btn-close-modal" onclick="closePreview()">✕</button>
+        </div>
+        <div class="preview-body">
+            <iframe id="previewIframe" src="about:blank" allowfullscreen allow="autoplay; fullscreen; picture-in-picture"></iframe>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+let adminPassword = '';
+let allStreams     = {};
+let allMatches    = [];
+
+// ─── Login ──────────────────────────────────────────
+document.getElementById('passwordInput').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+async function doLogin() {
+    const pwd = document.getElementById('passwordInput').value.trim();
+    if (!pwd) return;
+    try {
+        const res = await fetch('/api/admin/streams', { headers: { 'x-admin-password': pwd } });
+        if (res.status === 401) { showLoginError(); return; }
+        allStreams    = await res.json();
+        adminPassword = pwd;
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('adminPanel').style.display  = 'block';
+        init();
+    } catch { showLoginError(); }
+}
+
+function showLoginError() {
+    const err = document.getElementById('loginError');
+    err.style.display = 'block';
+    setTimeout(() => err.style.display = 'none', 3000);
+}
+
+function doLogout() {
+    adminPassword = '';
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('adminPanel').style.display  = 'none';
+    document.getElementById('passwordInput').value = '';
+}
+
+// ─── Init ───────────────────────────────────────────
+async function init() {
+    await loadStreams();
+    await loadMatches();
+    updateStats();
+    renderStreamsTable();
+    renderMatchCards();
+}
+
+async function loadStreams() {
+    try {
+        const res = await fetch('/api/admin/streams', { headers: { 'x-admin-password': adminPassword } });
+        if (res.ok) allStreams = await res.json();
+    } catch {}
+}
+
+async function loadMatches() {
+    allMatches = [];
+    for (const date of ['today', 'yesterday', 'tomorrow']) {
+        try {
+            const res = await fetch(`/api/matches?date=${date}`, { cache: 'no-store' });
+            if (!res.ok) continue;
+            const data = await res.json();
+            (data.matches || []).forEach(m => { m._date = date; allMatches.push(m); });
+        } catch {}
+    }
+}
+
+// ─── Stats ──────────────────────────────────────────
+function updateStats() {
+    document.getElementById('statStreams').textContent = Object.keys(allStreams).length;
+    document.getElementById('statMatches').textContent = allMatches.length;
+    document.getElementById('statLive').textContent    = allMatches.filter(m => m.isLive).length;
+}
+
+// ─── Streams Table ───────────────────────────────────
+function renderStreamsTable() {
+    const wrap = document.getElementById('streamsTableWrap');
+    const keys = Object.keys(allStreams);
+    if (!keys.length) { wrap.innerHTML = '<div class="empty-state">لا توجد روابط محفوظة حتى الآن</div>'; return; }
+
+    const rows = keys.map(id => {
+        const s = allStreams[id];
+        const name = s.homeTeam && s.awayTeam ? `${s.homeTeam} vs ${s.awayTeam}` : id;
+        const zones = s.zones || [];
+        const zonesSummary = zones.map((z,i) => `<span style="background:rgba(27,117,240,0.1);border:1px solid rgba(27,117,240,0.25);border-radius:5px;padding:2px 7px;font-size:0.75rem;color:var(--primary)">${z.label||`جون ${i+1}`}</span>`).join(' ');
+        const upd = s.updatedAt ? new Date(s.updatedAt).toLocaleString('ar-EG') : '—';
+        return `
+        <tr>
+            <td><strong>${name}</strong><br><small style="color:var(--text-dim)">${id}</small></td>
+            <td>${zonesSummary || '<span style="color:var(--text-dim)">—</span>'}</td>
+            <td style="color:var(--text-dim);font-size:0.8rem">${upd}</td>
+            <td><button onclick="quickDelete('${id}')" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:var(--danger);padding:4px 10px;border-radius:8px;cursor:pointer;font-family:Cairo,sans-serif;font-size:0.8rem;">حذف</button></td>
+        </tr>`;
+    }).join('');
+
+    wrap.innerHTML = `<table class="streams-table"><thead><tr><th>المباراة</th><th>الجونات</th><th>آخر تحديث</th><th>إجراء</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+async function quickDelete(matchId) {
+    if (!confirm('هتحذف الرابط؟')) return;
+    await deleteStream(matchId);
+    showToast('✅ تم الحذف', 'success');
+    await loadStreams(); updateStats(); renderStreamsTable(); renderMatchCards();
+}
+
+// ─── Match Cards ─────────────────────────────────────
+function renderMatchCards() {
+    const grid = document.getElementById('matchesGrid');
+    if (!allMatches.length) { grid.innerHTML = '<div class="empty-state" style="padding:2rem;text-align:center;color:var(--text-dim)">لا توجد مباريات</div>'; return; }
+    const sorted = [...allMatches].sort((a,b) => (a.isLive?0:1) - (b.isLive?0:1));
+    grid.innerHTML = sorted.map(m => buildMatchCard(m)).join('');
+}
+
+// State management for match streams (main broadcast + highlight zones)
+const mainStreamState = {}; // matchId → { iframeUrl, externalUrl }
+const zonesState      = {}; // matchId → [{label, iframeUrl, externalUrl}]
+
+function initMatchDataState(matchId) {
+    if (!mainStreamState[matchId]) {
+        const saved = allStreams[matchId];
+        if (saved) {
+            mainStreamState[matchId] = saved.mainStream || { iframeUrl: saved.iframeUrl || '', externalUrl: saved.externalUrl || '' };
+            
+            // Populate highlight/goal zones
+            if (saved.zones && Array.isArray(saved.zones)) {
+                zonesState[matchId] = JSON.parse(JSON.stringify(saved.zones));
+            } else {
+                zonesState[matchId] = [];
+            }
+        } else {
+            mainStreamState[matchId] = { iframeUrl: '', externalUrl: '' };
+            zonesState[matchId]      = [];
+        }
+    }
+}
+
+function buildMatchCard(m) {
+    const id = m.id || '';
+    const stream = allStreams[id];
+    const hasStream = !!stream;
+    
+    initMatchDataState(id);
+    const mainStream = mainStreamState[id];
+    const savedZones = zonesState[id];
+    
+    const dateLabel = m._date === 'today' ? 'اليوم' : m._date === 'yesterday' ? 'أمس' : 'غداً';
+    const scoreStr  = (m.homeScore != null && m.awayScore != null) ? ` ${m.homeScore}-${m.awayScore} ` : ' vs ';
+
+    const homeLogo = m.homeLogo ? `<img src="${escHtml(m.homeLogo)}" class="team-logo-sm" onerror="this.style.display='none'">` : `<div class="team-logo-placeholder">🏠</div>`;
+    const awayLogo = m.awayLogo ? `<img src="${escHtml(m.awayLogo)}" class="team-logo-sm" onerror="this.style.display='none'">` : `<div class="team-logo-placeholder">✈️</div>`;
+
+    const zonesHtml = savedZones.map((z, i) => buildZoneItem(id, i, z)).join('');
+
+    return `
+    <div class="match-admin-card ${hasStream ? 'has-stream' : ''}" id="mcard-${id}">
+        <div class="match-card-header" onclick="toggleCard('${id}')">
+            <div class="match-teams">
+                ${homeLogo}
+                <div class="match-vs-info">
+                    <div class="match-teams-name">${escHtml(m.homeTeam)}${scoreStr}${escHtml(m.awayTeam)}</div>
+                    <div class="match-meta-sm">
+                        ${escHtml(m.league||'')} • ${dateLabel}${m.time?' • '+m.time:''}
+                        ${m.isLive ? '<span class="badge-live">🔴 مباشر</span>' : ''}
+                        <span class="badge-zones ${hasStream ? 'visible' : ''}" id="zbadge-${id}">
+                            📺 ${mainStream.iframeUrl || mainStream.externalUrl ? 'بث رئيسي + ' : ''}${savedZones.length} أهداف
+                        </span>
+                    </div>
+                </div>
+                ${awayLogo}
+            </div>
+            <span class="card-toggle">▼</span>
+        </div>
+        <div class="match-card-body" id="mbody-${id}">
+            <!-- 1. MAIN MATCH BROADCAST SECTION -->
+            <div style="background: rgba(27,117,240,0.04); border: 1px solid rgba(27,117,240,0.15); border-radius: 14px; padding: 1.25rem; margin-top: 1rem;">
+                <h4 style="font-weight: 700; color: #fff; margin-bottom: 0.75rem; font-size: 0.95rem; display: flex; align-items: center; gap: 6px;">
+                    📡 البث المباشر الرئيسي للمباراة
+                </h4>
+                
+                <label class="form-label">🔗 رابط إيفريم البث الرئيسي (iframe src)</label>
+                <input class="form-input" id="main-ifr-${id}" value="${escHtml(mainStream.iframeUrl)}" placeholder="https://player.twitch.tv/?channel=...&parent=localhost">
+                <p class="form-hint">الصق رابط بث الماتش المباشر (مثل Twitch أو YouTube أو أي iframe خارجي)</p>
+                
+                <label class="form-label">🌐 رابط خارجي بديل للبث</label>
+                <input class="form-input" id="main-ext-${id}" value="${escHtml(mainStream.externalUrl)}" placeholder="https://...">
+                <p class="form-hint">رابط موقع البث الرئيسي لفتحه في نافذة جديدة كبديل</p>
+                
+                ${mainStream.iframeUrl ? `<button onclick="previewZone('${escHtml(mainStream.iframeUrl)}')" style="background:rgba(27,117,240,0.1);border:1px solid rgba(27,117,240,0.25);color:var(--primary);border-radius:8px;padding:6px 14px;cursor:pointer;font-family:Cairo,sans-serif;font-size:0.8rem">👁️ معاينة البث الرئيسي</button>` : ''}
+            </div>
+
+            <!-- 2. GOALS & ATTACKS SECTION -->
+            <div style="margin-top: 1.5rem;">
+                <h4 style="font-weight: 700; color: #fff; margin-bottom: 0.5rem; font-size: 0.95rem;">
+                    ⚽ الأهداف واللقطات الهامة للمباراة
+                </h4>
+                <div class="zones-list" id="zones-${id}">
+                    ${zonesHtml}
+                </div>
+                <button class="btn-add-zone" onclick="addZone('${id}')">+ إضافة هدف / لقطة هامة</button>
+            </div>
+
+            <!-- ACTIONS -->
+            <div class="form-actions" style="margin-top:1.5rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                <button class="btn-save" onclick="saveStream('${id}', '${escHtml(m.homeTeam)}', '${escHtml(m.awayTeam)}')">💾 حفظ البث واللقطات</button>
+                ${hasStream ? `<button class="btn-delete" onclick="removeStream('${id}')">🗑️ حذف الكل</button>` : ''}
+                <a class="btn-ext" href="match-details?id=${id}" target="_blank">🔗 صفحة المباراة</a>
+            </div>
+        </div>
+    </div>`;
+}
+
+function buildZoneItem(matchId, idx, zone) {
+    const label     = escHtml(zone.label     || `الهدف ${idx+1}`);
+    const iframeUrl = escHtml(zone.iframeUrl || '');
+    const extUrl    = escHtml(zone.externalUrl || '');
+    const minute    = zone.minute !== undefined && zone.minute !== null ? zone.minute : '';
+    return `
+    <div class="zone-item" id="zone-${matchId}-${idx}" style="margin-top: 0.75rem;">
+        <div class="zone-header">
+            <span class="zone-num">⚽ لقطة ${idx+1}</span>
+            <button class="btn-remove-zone" onclick="removeZone('${matchId}', ${idx})">✕ حذف اللقطة</button>
+        </div>
+        <label class="form-label">🏷️ اسم اللقطة / الهدف</label>
+        <input class="form-input rtl" id="zlbl-${matchId}-${idx}" value="${label}" placeholder="مثال: جون ميسي الأول، هدف رائع، هجمة خطيرة...">
+        
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.6rem;">
+            <div style="flex: 1; min-width: 200px;">
+                <label class="form-label">🔗 رابط الإيفريم (iframe src)</label>
+                <input class="form-input" id="zifr-${matchId}-${idx}" value="${iframeUrl}" placeholder="https://..." style="margin-bottom: 0;">
+            </div>
+            <div style="width: 130px;">
+                <label class="form-label">⏱️ الدقيقة (اختياري)</label>
+                <input type="number" class="form-input" id="zmin-${matchId}-${idx}" value="${minute}" placeholder="مثال: 15" style="margin-bottom: 0; text-align: center;">
+            </div>
+        </div>
+
+        <label class="form-label">🌐 رابط خارجي بديل (اختياري)</label>
+        <input class="form-input" id="zext-${matchId}-${idx}" value="${extUrl}" placeholder="https://...">
+        ${iframeUrl ? `<button onclick="previewZone('${escHtml(zone.iframeUrl||'')}')" style="margin-top:0.4rem;background:rgba(27,117,240,0.08);border:1px solid rgba(27,117,240,0.2);color:var(--primary);border-radius:8px;padding:5px 14px;cursor:pointer;font-family:Cairo,sans-serif;font-size:0.8rem">👁️ معاينة اللقطة</button>` : ''}
+    </div>`;
+}
+
+function toggleCard(id) { document.getElementById(`mcard-${id}`).classList.toggle('open'); }
+
+// ─── Zone management ────────────────────────────────
+function addZone(matchId) {
+    initMatchDataState(matchId);
+    const zones = zonesState[matchId];
+    zones.push({ label: `الهدف ${zones.length + 1}`, iframeUrl: '', externalUrl: '', minute: '' });
+    rerenderZones(matchId);
+}
+
+function removeZone(matchId, idx) {
+    initMatchDataState(matchId);
+    const zones = zonesState[matchId];
+    zones.splice(idx, 1);
+    rerenderZones(matchId);
+}
+
+function rerenderZones(matchId) {
+    const zones = zonesState[matchId];
+    const container = document.getElementById(`zones-${matchId}`);
+    if (!container) return;
+    container.innerHTML = zones.map((z, i) => buildZoneItem(matchId, i, z)).join('');
+}
+
+// ─── Read from DOM before saving ──────────────
+function readZonesFromDOM(matchId) {
+    initMatchDataState(matchId);
+    const zones = zonesState[matchId];
+    return zones.map((_, i) => {
+        const rawMin = document.getElementById(`zmin-${matchId}-${i}`)?.value.trim();
+        return {
+            label:       document.getElementById(`zlbl-${matchId}-${i}`)?.value.trim() || `الهدف ${i+1}`,
+            iframeUrl:   document.getElementById(`zifr-${matchId}-${i}`)?.value.trim() || '',
+            externalUrl: document.getElementById(`zext-${matchId}-${i}`)?.value.trim() || '',
+            minute:      rawMin !== '' ? parseInt(rawMin, 10) : null
+        };
+    }).filter(z => z.iframeUrl || z.externalUrl);
+}
+
+// ─── API ─────────────────────────────────────────────
+async function saveStream(matchId, homeTeam, awayTeam) {
+    const mainStream = {
+        iframeUrl:   document.getElementById(`main-ifr-${matchId}`)?.value.trim() || '',
+        externalUrl: document.getElementById(`main-ext-${matchId}`)?.value.trim() || ''
+    };
+    const zones = readZonesFromDOM(matchId);
+    
+    if (!mainStream.iframeUrl && !mainStream.externalUrl && !zones.length) {
+        showToast('⚠️ أدخل رابط البث المباشر أو أضف لقطة/هدف على الأقل', 'error');
+        return;
+    }
+    
+    try {
+        const res = await fetch('/api/admin/streams', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
+            body: JSON.stringify({ matchId, mainStream, zones, homeTeam, awayTeam })
+        });
+        if (!res.ok) throw new Error();
+        showToast(`✅ تم الحفظ بنجاح!`, 'success');
+        
+        // Clear local cache state to force reload
+        delete mainStreamState[matchId];
+        delete zonesState[matchId];
+        
+        await loadStreams(); updateStats(); renderStreamsTable(); renderMatchCards();
+    } catch { showToast('❌ حدث خطأ، حاول مرة أخرى', 'error'); }
+}
+
+async function removeStream(matchId) {
+    if (!confirm('هتحذف البث وكل اللقطات؟')) return;
+    await deleteStream(matchId);
+    delete mainStreamState[matchId];
+    delete zonesState[matchId];
+    showToast('✅ تم الحذف', 'success');
+    await loadStreams(); updateStats(); renderStreamsTable(); renderMatchCards();
+}
+
+async function deleteStream(matchId) {
+    try { await fetch(`/api/admin/streams?matchId=${encodeURIComponent(matchId)}`, { method: 'DELETE', headers: { 'x-admin-password': adminPassword } }); } catch {}
+}
+
+function previewZone(url) {
+    if (!url) { showToast('⚠️ لا يوجد رابط', 'error'); return; }
+    document.getElementById('previewIframe').src = url;
+    document.getElementById('previewModal').classList.add('open');
+}
+
+function closePreview() {
+    document.getElementById('previewIframe').src = 'about:blank';
+    document.getElementById('previewModal').classList.remove('open');
+}
+document.getElementById('previewModal').addEventListener('click', function(e) { if (e.target === this) closePreview(); });
+
+// ─── Toast ───────────────────────────────────────────
+function showToast(msg, type = 'success') {
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.textContent = msg;
+    document.getElementById('toastContainer').appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+}
+
+function escHtml(str) {
+    return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+</script>
+</body>
+</html>

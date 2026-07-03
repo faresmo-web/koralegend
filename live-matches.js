@@ -51,41 +51,7 @@ document.addEventListener('DOMContentLoaded', function () {
         renderMatches(lastMatches);
     });
 
-    // Mobile menu
-    const menuToggle = document.getElementById('menuToggle');
-    const mainNav    = document.querySelector('.main-nav');
-    if (menuToggle && mainNav) {
-        console.log('✅ Menu toggle initialized (live-matches)');
-        menuToggle.addEventListener('click', e => {
-            e.stopImmediatePropagation();
-            e.preventDefault();
-            console.log('🔄 Toggle clicked (live-matches)');
-            menuToggle.classList.toggle('active');
-            mainNav.classList.toggle('active');
-            console.log('Active class:', menuToggle.classList.contains('active'));
-        });
-        
-        // Close menu when clicking outside
-        document.addEventListener('click', e => {
-            setTimeout(() => {
-                if (!mainNav.contains(e.target) && !menuToggle.contains(e.target)) {
-                    menuToggle.classList.remove('active');
-                    mainNav.classList.remove('active');
-                }
-            }, 10);
-        });
-        
-        // Close menu when clicking on a nav link
-        const navLinks = mainNav.querySelectorAll('.nav-link');
-        navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                menuToggle.classList.remove('active');
-                mainNav.classList.remove('active');
-            });
-        });
-    } else {
-        console.warn('❌ Menu toggle or mainNav not found (live-matches)', { menuToggle, mainNav });
-    }
+    // Mobile menu toggle is already initialized globally in script.js
 
     // Click handler for teams using capture phase to prevent match detail navigation
     const container = document.getElementById('matchesList');

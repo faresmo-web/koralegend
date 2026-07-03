@@ -1,7 +1,15 @@
+// Theme management (Immediate execution to prevent flash)
+(function() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+})();
+
 // Language Management
 const currentLang = 'ar';
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Theme Toggle
+    initThemeToggle();
     // Show loading indicator at page start
     showPageLoading();
     
@@ -83,6 +91,43 @@ document.addEventListener('DOMContentLoaded', function() {
         hidePageLoading();
     }, 800);
 });
+
+function initThemeToggle() {
+    const headerContent = document.querySelector('.header-content');
+    if (!headerContent) return;
+
+    // Remove existing toggle if any (to prevent duplicates during client navigation)
+    const existing = document.getElementById('themeToggleBtn');
+    if (existing) existing.remove();
+
+    // Create the button
+    const themeBtn = document.createElement('button');
+    themeBtn.id = 'themeToggleBtn';
+    themeBtn.className = 'theme-toggle-btn';
+    themeBtn.setAttribute('aria-label', 'Toggle Theme');
+    
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    themeBtn.innerHTML = savedTheme === 'light' ? '🌙' : '☀️';
+    
+    // Insert before menuToggle if available, else append
+    const menuToggle = document.getElementById('menuToggle');
+    if (menuToggle) {
+        headerContent.insertBefore(themeBtn, menuToggle);
+    } else {
+        headerContent.appendChild(themeBtn);
+    }
+    
+    themeBtn.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        themeBtn.innerHTML = newTheme === 'light' ? '🌙' : '☀️';
+        console.log(`🌓 Theme changed to: ${newTheme}`);
+    });
+}
 
 function loadPageContent() {
     // Determine which page we're on and load appropriate content

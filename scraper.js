@@ -228,7 +228,7 @@ async function run() {
     const today     = new Date();
     const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
     const tomorrow  = new Date(today); tomorrow.setDate(today.getDate() + 1);
-    const fmt = d => d.toISOString().split('T')[0];
+    const fmt = d => d.toLocaleDateString('en-CA', { timeZone: TIMEZONE });
 
     console.log(`\n⚡ Fetching matches: ${fmt(yesterday)} | ${fmt(today)} | ${fmt(tomorrow)}`);
     

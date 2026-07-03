@@ -15,42 +15,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     });
     
-    // Mobile menu - Initialize first before any other checks
-    const menuToggle = document.getElementById('menuToggle');
-    const mainNav    = document.querySelector('.main-nav');
-    if (menuToggle && mainNav) {
-        console.log('✅ Menu toggle initialized (match-details)');
-        // Toggle menu when button is clicked
-        menuToggle.addEventListener('click', function(e) {
-            e.stopImmediatePropagation();
-            e.preventDefault();
-            console.log('🔄 Toggle clicked (match-details)');
-            menuToggle.classList.toggle('active');
-            mainNav.classList.toggle('active');
-            console.log('Active class:', menuToggle.classList.contains('active'));
-        });
-        
-        // Close menu when clicking on a nav link
-        const navLinks = mainNav.querySelectorAll('.nav-link');
-        navLinks.forEach(link => {
-            link.addEventListener('click', function() {
-                menuToggle.classList.remove('active');
-                mainNav.classList.remove('active');
-            });
-        });
-        
-        // Close menu when clicking outside
-        document.addEventListener('click', function(e) {
-            setTimeout(() => {
-                if (!menuToggle.contains(e.target) && !mainNav.contains(e.target)) {
-                    menuToggle.classList.remove('active');
-                    mainNav.classList.remove('active');
-                }
-            }, 10);
-        });
-    } else {
-        console.warn('❌ Menu toggle or mainNav not found (match-details)', { menuToggle, mainNav });
-    }
+    // Mobile menu toggle is already initialized globally in script.js
     
     const urlParams = new URLSearchParams(window.location.search);
     const matchId = urlParams.get('id');
@@ -115,11 +80,22 @@ document.addEventListener('DOMContentLoaded', async function() {
         matchDetails = matchDetailsDatabase[matchId] || null;
     }
 
+    // 3.5 Load stream data to link events (goals) to video clips
+    window.matchStreamData = null;
+    try {
+        const streamRes = await fetch(`/api/streams?matchId=${encodeURIComponent(matchId)}`, { cache: 'no-store' });
+        if (streamRes.ok) {
+            const streamJson = await streamRes.json();
+            window.matchStreamData = streamJson.stream;
+        }
+    } catch (_) {}
+
     // 4. Render everything
     renderHeroCard(matchInfo, matchDetails, dateType);
-    renderEvents(matchDetails);
+    renderEvents(matchDetails, window.matchStreamData);
     renderStats(matchDetails);
     renderLineups(matchDetails, matchInfo);
+    renderStandings(matchDetails, matchInfo);
 
     // Hide page loading indicator
     if (typeof hidePageLoading === 'function') {
@@ -144,7 +120,130 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (matchInfo.isLive) {
         startLivePolling(matchId, matchInfo);
     }
+
+    // 7. Load stream link (non-blocking)
+    loadAndRenderStream(matchId);
 });
+
+// ── Stream Loading ────────────────────────────────────────────
+async function loadAndRenderStream(matchId) {
+    try {
+        const stream = window.matchStreamData;
+
+        const tabBtn    = document.getElementById('tab-stream');
+        const container = document.getElementById('streamContainer');
+        if (!tabBtn || !container || !stream) return;
+
+        // Build list of video feeds
+        let zones = [];
+        
+        // 1. Add Main Broadcast if configured
+        if (stream.mainStream && (stream.mainStream.iframeUrl || stream.mainStream.externalUrl)) {
+            zones.push({
+                label: '📡 البث المباشر للمباراة',
+                iframeUrl: stream.mainStream.iframeUrl || '',
+                externalUrl: stream.mainStream.externalUrl || '',
+                isMain: true
+            });
+        }
+
+        // 2. Add Goals/Highlights (zones)
+        if (Array.isArray(stream.zones)) {
+            stream.zones.forEach(z => {
+                zones.push({
+                    label: z.label || 'لقطة هامة',
+                    iframeUrl: z.iframeUrl || '',
+                    externalUrl: z.externalUrl || '',
+                    isMain: false
+                });
+            });
+        }
+
+        // 3. Fallback to old format
+        if (!zones.length && (stream.iframeUrl || stream.externalUrl)) {
+            zones.push({
+                label: stream.label || 'مشاهدة مباشرة',
+                iframeUrl: stream.iframeUrl || '',
+                externalUrl: stream.externalUrl || '',
+                isMain: true
+            });
+        }
+
+        if (!zones.length) return;
+
+        // Show the tab
+        tabBtn.classList.add('visible');
+
+        // Render with zone switcher (first video active)
+        renderStreamZones(container, zones, 0);
+
+    } catch (_) { /* silently fail */ }
+}
+
+function renderStreamZones(container, zones, activeIdx) {
+    const zone = zones[activeIdx];
+
+    // Zone switcher buttons
+    const switcherHtml = zones.length > 1
+        ? `<div class="zone-switcher">
+            ${zones.map((z, i) => `
+                <button class="zone-btn ${i === activeIdx ? 'active' : ''}"
+                        onclick="switchZone(this, ${i})"
+                        data-idx="${i}">
+                    ${z.isMain ? '📡' : '⚽'} ${escHtml(z.label)}
+                </button>`).join('')}
+           </div>`
+        : '';
+
+    // Iframe or notice
+    let iframeHtml = '';
+    if (zone.iframeUrl) {
+        iframeHtml = `
+        <div class="stream-iframe-wrap">
+            <iframe id="streamIframe"
+                src="${zone.iframeUrl}"
+                allowfullscreen
+                allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope"
+            ></iframe>
+        </div>`;
+    } else if (zone.externalUrl) {
+        iframeHtml = `
+        <div class="stream-notice">
+            <div class="notice-icon">📺</div>
+            <p style="font-size:1rem;font-weight:700;color:var(--text-primary)">${escHtml(zone.label||'مشاهدة مباشرة')}</p>
+            <a href="${zone.externalUrl}" target="_blank" rel="noopener" class="btn-stream-ext" style="margin-top:1rem;display:inline-flex">🌐 شاهد الآن</a>
+        </div>`;
+    }
+
+    const fullscreenBtn = zone.iframeUrl
+        ? `<button class="btn-fullscreen" onclick="document.getElementById('streamIframe')?.requestFullscreen()">⛶ ملء الشاشة</button>` : '';
+    const extBtn = zone.externalUrl
+        ? `<a class="btn-stream-ext" href="${zone.externalUrl}" target="_blank" rel="noopener">🌐 نافذة جديدة</a>` : '';
+
+    container.innerHTML = `
+    <div class="stream-card">
+        ${switcherHtml}
+        <div class="stream-top-bar">
+            <div class="stream-title"><span class="live-dot"></span>${escHtml(zone.label||'مشاهدة مباشرة')}</div>
+            <div class="stream-actions">${fullscreenBtn}${extBtn}</div>
+        </div>
+        ${iframeHtml}
+    </div>`;
+
+    // Store zones on container for switching
+    container._streamZones = zones;
+}
+
+function switchZone(btn, idx) {
+    const container = document.getElementById('streamContainer');
+    if (!container || !container._streamZones) return;
+    renderStreamZones(container, container._streamZones, idx);
+}
+
+function escHtml(s) {
+    return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 
 function renderHeroCard(match, details, dateType) {
     const cardContainer = document.getElementById('matchHeroCard');
@@ -270,7 +369,7 @@ function renderHeroCard(match, details, dateType) {
     `;
 }
 
-function renderEvents(details) {
+function renderEvents(details, stream) {
     const container = document.getElementById('eventsTimeline');
     if (!container) return;
     
@@ -398,9 +497,30 @@ function renderEvents(details) {
             </div>
         `;
 
+        // Check if there is a highlight clip linked to this event's minute
+        let watchBtnHtml = '';
+        if (stream && Array.isArray(stream.zones) && evt.min) {
+            const eventMinVal = parseInt(evt.min) || 0;
+            const localIdx = stream.zones.findIndex(z => {
+                if (z.minute == null) return false;
+                return parseInt(z.minute) === eventMinVal;
+            });
+            
+            if (localIdx !== -1) {
+                const hasMainStream = stream.mainStream && (stream.mainStream.iframeUrl || stream.mainStream.externalUrl);
+                const globalIdx = hasMainStream ? localIdx + 1 : localIdx;
+                
+                watchBtnHtml = `
+                <button class="event-watch-btn" onclick="playEventClip(${globalIdx})" title="شاهد اللقطة">
+                    📺 شاهد اللقطة
+                </button>`;
+            }
+        }
+
         wrapper.innerHTML = `
             <div class="timeline-event-content">
                 ${infoHtml}
+                ${watchBtnHtml}
             </div>
             <div class="timeline-minute-badge"><span class="min-tick">'</span>${evt.min}</div>
             <div style="grid-column: ${evt.team === 'home' ? '3' : '1'}"></div>
@@ -409,6 +529,26 @@ function renderEvents(details) {
         container.appendChild(wrapper);
     });
 }
+
+// Global action to switch stream channel/tab
+window.playEventClip = function(idx) {
+    // 1. Find stream tab button
+    const tabStreamBtn = document.getElementById('tab-stream');
+    if (tabStreamBtn) {
+        tabStreamBtn.click();
+    }
+    
+    // 2. Scroll to container
+    const container = document.getElementById('streamContainer');
+    if (container) {
+        container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // 3. Switch active stream/highlight
+        if (container._streamZones) {
+            renderStreamZones(container, container._streamZones, idx);
+        }
+    }
+};
 
 function renderStats(details) {
     const container = document.getElementById('statsCard');
@@ -524,55 +664,49 @@ function renderLineups(details, matchInfo) {
         .player-node { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); animation: floatNode 4s infinite ease-in-out; }
         .player-node:nth-child(even) { animation-delay: 2s; }
         .player-node:hover { z-index: 10 !important; animation-play-state: paused; }
-        .player-node:hover .node-core { transform: rotate(45deg) scale(1.2) !important; box-shadow: 0 0 30px currentColor !important; }
+        .player-node:hover .node-core { transform: scale(1.15) !important; box-shadow: 0 0 30px currentColor !important; border-width: 2.5px !important; }
         .player-node:hover .name-tag { background: currentColor !important; color: #000 !important; border-color: transparent !important; transform: scale(1.1); }
         .player-node:hover .name-tag span { color: #000 !important; font-weight: 900 !important; }
         </style>
 
-        <div style="position:relative;width:100%;padding-bottom:62%;border-radius:16px;overflow:hidden;background:#060a14;border:1px solid rgba(0, 229, 255, 0.25);box-shadow:inset 0 0 80px rgba(0,100,255,0.15), 0 15px 40px rgba(0,0,0,0.6);">
-            <!-- High Tech Grid Background -->
-            <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(0,229,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,0.04) 1px, transparent 1px);background-size:25px 25px;opacity:0.8;"></div>
+        <div style="position:relative;width:100%;padding-bottom:62%;border-radius:16px;overflow:hidden;background:#2d7a1f;border:2px solid rgba(0,0,0,0.4);box-shadow:0 15px 40px rgba(0,0,0,0.6), inset 0 0 60px rgba(0,0,0,0.2);">
+            <!-- Grass Stripes -->
+            <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(90deg, rgba(0,0,0,0.06) 0px, rgba(0,0,0,0.06) 20px, transparent 20px, transparent 40px);pointer-events:none;"></div>
             
             <svg style="position:absolute;top:0;left:0;width:100%;height:100%;" viewBox="0 0 160 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                    <filter id="neonGlowPitch" x="-20%" y="-20%" width="140%" height="140%">
-                        <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
-                        <feMerge>
-                            <feMergeNode in="coloredBlur"/>
-                            <feMergeNode in="SourceGraphic"/>
-                        </feMerge>
-                    </filter>
-                    <radialGradient id="centerLight" cx="50%" cy="50%" r="50%">
-                        <stop offset="0%" stop-color="rgba(0, 229, 255, 0.12)"/>
-                        <stop offset="100%" stop-color="rgba(0, 0, 0, 0)"/>
+                    <radialGradient id="pitchLight" cx="50%" cy="50%" r="60%">
+                        <stop offset="0%" stop-color="rgba(255,255,255,0.07)"/>
+                        <stop offset="100%" stop-color="rgba(0,0,0,0.15)"/>
                     </radialGradient>
                 </defs>
                 
-                <!-- Center Spotlight -->
-                <rect width="160" height="100" fill="url(#centerLight)"/>
+                <!-- Pitch vignette light -->
+                <rect width="160" height="100" fill="url(#pitchLight)"/>
                 
-                <!-- Glowing Pitch Lines -->
-                <g filter="url(#neonGlowPitch)" stroke="rgba(0, 229, 255, 0.4)" stroke-width="0.6" fill="none">
+                <!-- Pitch Lines (white like real football) -->
+                <g stroke="rgba(255,255,255,0.92)" stroke-width="0.7" fill="none">
                     <!-- Outer border -->
-                    <rect x="5" y="5" width="150" height="90" rx="3" />
+                    <rect x="5" y="5" width="150" height="90" />
                     <!-- Center line -->
                     <line x1="80" y1="5" x2="80" y2="95" />
                     <!-- Center circle -->
                     <circle cx="80" cy="50" r="14" />
-                    <circle cx="80" cy="50" r="0.8" fill="rgba(0, 229, 255, 0.9)" />
-                    <!-- Tactical outer ring -->
-                    <circle cx="80" cy="50" r="26" stroke="rgba(0, 229, 255, 0.15)" stroke-width="0.4" stroke-dasharray="2,3" />
+                    <!-- Center spot -->
+                    <circle cx="80" cy="50" r="0.9" fill="rgba(255,255,255,0.9)" stroke="none"/>
                     
                     <!-- Home penalty area (left) -->
                     <rect x="5" y="24" width="22" height="52" />
                     <rect x="5" y="36" width="8" height="28" />
-                    <circle cx="19" cy="50" r="0.8" fill="rgba(0, 229, 255, 0.9)"/>
+                    <!-- Home penalty spot -->
+                    <circle cx="19" cy="50" r="0.8" fill="rgba(255,255,255,0.9)" stroke="none"/>
                     <path d="M27,42 A10,10 0 0,1 27,58" />
                     
                     <!-- Away penalty area (right) -->
                     <rect x="133" y="24" width="22" height="52" />
                     <rect x="147" y="36" width="8" height="28" />
-                    <circle cx="141" cy="50" r="0.8" fill="rgba(0, 229, 255, 0.9)"/>
+                    <!-- Away penalty spot -->
+                    <circle cx="141" cy="50" r="0.8" fill="rgba(255,255,255,0.9)" stroke="none"/>
                     <path d="M133,42 A10,10 0 0,0 133,58" />
                     
                     <!-- Corner Arcs -->
@@ -582,13 +716,9 @@ function renderLineups(details, matchInfo) {
                     <path d="M155,91 A4,4 0 0,1 151,95" />
                 </g>
                 
-                <!-- Data aesthetics (random tech lines & HUD elements) -->
-                <path d="M 5 20 L 12 20 L 16 16 L 22 16" stroke="rgba(0, 229, 255, 0.25)" stroke-width="0.4" fill="none" />
-                <path d="M 155 80 L 148 80 L 144 84 L 138 84" stroke="rgba(0, 229, 255, 0.25)" stroke-width="0.4" fill="none" />
-                <circle cx="22" cy="16" r="0.6" fill="rgba(0, 229, 255, 0.6)" />
-                <circle cx="138" cy="84" r="0.6" fill="rgba(0, 229, 255, 0.6)" />
-                <text x="8" y="10" fill="rgba(0, 229, 255, 0.3)" font-size="3" font-family="Orbitron, sans-serif">TACTICAL-HUD_V1.0</text>
-                <text x="125" y="93" fill="rgba(0, 229, 255, 0.3)" font-size="3" font-family="Orbitron, sans-serif">LIVE // TRACKING</text>
+                <!-- Goalmouth lines -->
+                <line x1="5" y1="5" x2="155" y2="5" stroke="rgba(255,255,255,0.92)" stroke-width="0.7"/>
+                <line x1="5" y1="95" x2="155" y2="95" stroke="rgba(255,255,255,0.92)" stroke-width="0.7"/>
             </svg>
             
             <!-- Players container -->
@@ -614,29 +744,33 @@ function renderLineups(details, matchInfo) {
             topPct  = 5  + (xRaw / 100) * 90;
         }
 
-        // Home: Electric Cyan | Away: Neon Magenta
-        const mainColor   = isHome ? '#00e5ff' : '#ff2a75';
-        const darkColor   = isHome ? '#0033aa' : '#880033';
+        // Home: Blue | Away: Red — clear on green pitch
+        const mainColor   = isHome ? '#3b9dff' : '#ff4444';
+        const ringColor   = isHome ? 'rgba(59,157,255,0.7)' : 'rgba(255,68,68,0.7)';
         
         const isCapt = player.isCaptain;
-        const captStyle = isCapt ? `box-shadow: 0 0 15px ${mainColor}, inset 0 0 10px rgba(255,255,255,0.5); border: 2px solid #fff;` : `box-shadow: 0 0 10px ${mainColor}66; border: 1.5px solid ${mainColor};`;
+        const captStyle = isCapt ? `box-shadow: 0 0 12px ${mainColor}, 0 0 0 2px #fff; border: 2.5px solid #fff;` : `box-shadow: 0 2px 8px rgba(0,0,0,0.5); border: 2px solid ${mainColor};`;
 
         el.className = 'player-node';
         el.style.cssText = `position:absolute;left:${leftPct}%;top:${topPct}%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;cursor:${player.id ? 'pointer' : 'default'};z-index:2;color:${mainColor};`;
         
         el.innerHTML = `
-            <div style="position:relative; width:34px; height:34px; display:flex; align-items:center; justify-content:center; margin-bottom: 6px;">
+            <div style="position:relative; width:44px; height:44px; display:flex; align-items:center; justify-content:center; margin-bottom: 5px;">
                 <!-- Animated Radar Pulse -->
-                <div style="position:absolute; inset:-8px; border:1px solid ${mainColor}; border-radius:50%; animation: radarPulse 2s infinite; pointer-events:none;"></div>
+                <div style="position:absolute; inset:-8px; border:1px solid ${ringColor}; border-radius:50%; animation: radarPulse 2s infinite; pointer-events:none;"></div>
                 
-                <!-- Core Diamond Node -->
-                <div class="node-core" style="position:absolute; width:26px; height:26px; background:linear-gradient(135deg, ${darkColor}dd, ${mainColor}66); backdrop-filter:blur(4px); transform:rotate(45deg); display:flex; align-items:center; justify-content:center; transition:all 0.3s; ${captStyle}">
-                    <span style="transform:rotate(-45deg); font-size:0.8rem; font-weight:900; color:#ffffff; font-family:'Orbitron', sans-serif; text-shadow:0 0 5px #ffffff;">${player.num}</span>
+                <!-- Player Photo Circle -->
+                <div class="node-core" style="position:absolute; width:40px; height:40px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; transition:all 0.3s; ${captStyle} background:#1a2a40;">
+                    ${player.image
+                        ? `<img src="${player.image}" alt="${player.name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none';this.parentNode.querySelector('.fallback-num').style.display='flex';">`
+                        : ''
+                    }
+                    <span class="fallback-num" style="${player.image ? 'display:none;' : 'display:flex;'} align-items:center; justify-content:center; width:100%; height:100%; font-size:0.8rem; font-weight:900; color:#ffffff; font-family:'Orbitron', sans-serif; text-shadow:0 0 5px #ffffff;">${player.num}</span>
                 </div>
                 ${isCapt ? `<div style="position:absolute; top:-6px; right:-6px; background:gold; color:#000; font-size:0.55rem; font-weight:900; width:15px; height:15px; border-radius:50%; display:flex; align-items:center; justify-content:center; z-index:5; box-shadow:0 0 8px gold;">C</div>` : ''}
             </div>
             
-            <div class="name-tag" style="background:rgba(6,10,20,0.85); border:1px solid ${mainColor}40; border-radius:3px; padding:3px 6px; transition:all 0.3s; backdrop-filter:blur(3px);">
+            <div class="name-tag" style="background:rgba(0,0,0,0.75); border:1px solid ${mainColor}70; border-radius:4px; padding:2px 5px; transition:all 0.3s; backdrop-filter:blur(4px);">
                 <span style="font-size:0.6rem; color:#fff; white-space:nowrap; max-width:65px; overflow:hidden; text-overflow:ellipsis; display:block; text-align:center; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; transition:color 0.3s;">${player.name.split(' ').slice(-1)[0]}</span>
             </div>
         `;
@@ -716,6 +850,159 @@ function renderLineups(details, matchInfo) {
     listsGrid.appendChild(buildColumn(awayLineup, awayTeam, 'away'));
 }
 
+function renderStandings(details, matchInfo) {
+    const container = document.getElementById('standingsContainer');
+    if (!container) return;
+
+    const sData = details ? details.standings : null;
+    if (!sData || !sData.list_match || sData.list_match.length === 0) {
+        container.innerHTML = `<p style="text-align:center;color:var(--text-secondary);padding:2rem;">الترتيب غير متاح حالياً لهذه المباراة</p>`;
+        return;
+    }
+
+    let html = '';
+
+    // Extract stages
+    const stages = sData.stages || [];
+    const listMatch = sData.list_match;
+
+    // Loop over each stage in list_match
+    listMatch.forEach((stageItem, stageIdx) => {
+        const stageInfo = stages[stageIdx] || {};
+        const stageName = stageInfo.title || '';
+
+        if (stageName && listMatch.length > 1) {
+            html += `<h3 style="font-size:1.1rem;color:var(--primary-color);margin:1.5rem 0 0.75rem;font-weight:700;">${stageName}</h3>`;
+        }
+
+        // Parse groups / tables in this stage
+        const groupKeys = Object.keys(stageItem || {});
+        if (groupKeys.length === 0) return;
+
+        // Check if it's a flat array or a dictionary of groups
+        const firstKey = groupKeys[0];
+        const firstVal = stageItem[firstKey];
+
+        // Let's check if the firstVal is a team object (has team_name or points)
+        const isFlatTable = firstVal && (firstVal.team_name || firstVal.points !== undefined);
+
+        const groupsToRender = [];
+        if (isFlatTable) {
+            const teams = Object.values(stageItem).sort((a, b) => {
+                const diffA = a.diff ?? 0;
+                const diffB = b.diff ?? 0;
+                const ptsA = a.points ?? 0;
+                const ptsB = b.points ?? 0;
+                if (ptsA !== ptsB) return ptsB - ptsA;
+                return diffB - diffA;
+            });
+            groupsToRender.push({ name: '', teams });
+        } else {
+            groupKeys.forEach(gName => {
+                const gObj = stageItem[gName] || {};
+                const teams = Object.values(gObj).sort((a, b) => {
+                    const diffA = a.diff ?? 0;
+                    const diffB = b.diff ?? 0;
+                    const ptsA = a.points ?? 0;
+                    const ptsB = b.points ?? 0;
+                    if (ptsA !== ptsB) return ptsB - ptsA;
+                    return diffB - diffA;
+                });
+                const groupTitle = gName.length === 1 ? `المجموعة ${gName}` : gName;
+                groupsToRender.push({ name: groupTitle, teams });
+            });
+        }
+
+        // Render each group
+        groupsToRender.forEach(g => {
+            if (g.name) {
+                html += `<h4 style="font-size:0.95rem;color:var(--text-secondary);margin:1.2rem 0 0.5rem;font-weight:600;">${g.name}</h4>`;
+            }
+
+            html += `
+                <div style="overflow-x:auto;margin-bottom:1rem;">
+                    <table class="standings-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th style="text-align:right;padding-right:1rem;">الفريق</th>
+                                <th>لعب</th>
+                                <th>فاز</th>
+                                <th>تعادل</th>
+                                <th>خسر</th>
+                                <th>له:عليه</th>
+                                <th>الفارق</th>
+                                <th>النقاط</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            g.teams.forEach((team, idx) => {
+                const pos = idx + 1;
+                const teamNameObj = team.team_name || {};
+                const name = teamNameObj.title || teamNameObj.short_title || team.name || '';
+                const logo = teamNameObj.image || '';
+                
+                const played = team.play ?? 0;
+                const won = team.wins ?? 0;
+                const drawn = team.draw ?? 0;
+                const lost = team.lose ?? 0;
+                const goalsFor = team.for ?? 0;
+                const goalsAgainst = team.against ?? 0;
+                const gd = team.diff ?? 0;
+                const pts = team.points ?? 0;
+
+                // Check highlight (is home or away team of this match)
+                const isHome = matchInfo && (team.team_id == matchInfo.homeId || name === matchInfo.homeTeam);
+                const isAway = matchInfo && (team.team_id == matchInfo.awayId || name === matchInfo.awayTeam);
+                const highlightClass = (isHome || isAway) ? 'highlight-row' : '';
+
+                // Add special style to top/relegation position indicator
+                let posClass = '';
+                if (pos <= 2) posClass = 'pos-top';
+                else if (pos === 3 || pos === 4) posClass = 'pos-qual';
+                else if (g.teams.length > 4 && pos >= g.teams.length - 1) posClass = 'pos-rel';
+
+                // Border style from team note / color
+                let borderRightStyle = '';
+                if (team.color) {
+                    borderRightStyle = `style="border-right: 3px solid ${team.color};"`;
+                } else if (team.team_note && team.team_note.color) {
+                    borderRightStyle = `style="border-right: 3px solid ${team.team_note.color};"`;
+                }
+
+                html += `
+                    <tr class="${highlightClass}" ${borderRightStyle}>
+                        <td><span class="standing-pos ${posClass}">${pos}</span></td>
+                        <td>
+                            <div class="team-cell">
+                                ${logo ? `<img src="${logo}" alt="${name}" onerror="this.style.display='none'" loading="lazy">` : '⚽'}
+                                <span style="font-weight:600;">${name}</span>
+                            </div>
+                        </td>
+                        <td>${played}</td>
+                        <td>${won}</td>
+                        <td>${drawn}</td>
+                        <td>${lost}</td>
+                        <td>${goalsFor}:${goalsAgainst}</td>
+                        <td>${gd > 0 ? '+' + gd : gd}</td>
+                        <td style="font-weight:800;color:var(--primary-color);">${pts}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        });
+    });
+
+    container.innerHTML = html;
+}
+
 function showErrorMessage(arMsg, enMsg) {
     const card = document.getElementById('matchHeroCard');
     if (card) {
@@ -754,6 +1041,9 @@ function startLivePolling(matchId, matchInfo) {
             
             // Update lineups (in case of substitutions)
             renderLineups(details, matchInfo);
+
+            // Update standings
+            renderStandings(details, matchInfo);
             
             // Update hero card score and penalty scores if changed
             if (details.homeScore !== undefined && details.awayScore !== undefined) {

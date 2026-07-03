@@ -501,6 +501,57 @@
             }
         }
 
+        /* ── Lineup Pitch: Show Player Photo instead of Jersey Number ── */
+        .lineup-player-item .image-wrapper .img {
+            display: block !important;
+            width: 46px !important;
+            height: 46px !important;
+            border-radius: 50% !important;
+            overflow: hidden !important;
+            border: 2px solid rgba(255,255,255,0.35) !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5) !important;
+            margin: 0 auto !important;
+            background: #1a2340 !important;
+        }
+        .lineup-player-item .image-wrapper .img img {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            border-radius: 50% !important;
+            display: block !important;
+        }
+        /* Hide the plain number circle */
+        .lineup-player-item .image-wrapper span.number,
+        .lineup-player-item .image-wrapper span.number_cap {
+            display: none !important;
+        }
+        /* Captain badge: show a small "C" crown instead */
+        .lineup-player-item .image-wrapper span.number_cap::before {
+            content: "©";
+            display: flex !important;
+            position: absolute;
+            top: -6px;
+            right: -4px;
+            background: #ffc107;
+            color: #000;
+            font-size: 9px;
+            font-weight: 900;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        /* Shrink player name under photo */
+        .lineup-player-item .player-name h3 {
+            font-size: 10px !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            max-width: 60px !important;
+        }
+
         /* Pitch responsive */
         #lineupsContainer {
             width: 100%;
@@ -511,6 +562,286 @@
                 width: 26px !important;
                 height: 26px !important;
             }
+            .lineup-player-item .image-wrapper .img {
+                width: 36px !important;
+                height: 36px !important;
+            }
+            .lineup-player-item .player-name h3 {
+                font-size: 9px !important;
+                max-width: 48px !important;
+            }
+        }
+
+        /* ── Standings Table ── */
+        .standings-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid var(--card-border);
+            margin-top: 10px;
+        }
+        .standings-table thead tr {
+            background: rgba(255,255,255,0.04);
+        }
+        .standings-table th {
+            padding: 0.65rem 0.5rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .standings-table th:first-child { text-align: right; padding-right: 1rem; }
+        .standings-table tbody tr {
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            transition: background 0.15s;
+        }
+        .standings-table tbody tr:hover { background: rgba(255,255,255,0.04); }
+        .standings-table tbody tr.highlight-row {
+            background: rgba(27, 117, 240, 0.12);
+            border-right: 3px solid var(--primary-color);
+        }
+        .standings-table td {
+            padding: 0.65rem 0.5rem;
+            text-align: center;
+            color: #e0e0e0;
+        }
+        .standings-table td:first-child { text-align: right; padding-right: 1rem; }
+        .standing-pos {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.82rem;
+        }
+        .pos-top { background: rgba(59,130,246,0.2); color: #60a5fa; }
+        .pos-qual { background: rgba(16,185,129,0.15); color: #34d399; }
+        .pos-rel { background: rgba(239,68,68,0.15); color: #f87171; }
+        .team-cell {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .team-cell img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+        }
+        
+        .standings-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: var(--spacing-lg);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            overflow-x: auto;
+        }
+
+        /* ── Live Stream Tab ── */
+        #tab-stream { display: none; }
+        #tab-stream.visible { display: block; }
+
+        .stream-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(255, 81, 0, 0.15);
+            border: 1px solid rgba(255, 81, 0, 0.35);
+            color: #ff5100;
+            border-radius: 8px;
+            padding: 2px 8px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-right: 4px;
+            animation: streamPulse 2s infinite;
+        }
+
+        @keyframes streamPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255,81,0,0.4); }
+            50%       { box-shadow: 0 0 0 5px rgba(255,81,0,0); }
+        }
+
+        .stream-card {
+            background: linear-gradient(135deg, rgba(13,20,44,0.9) 0%, rgba(6,9,25,0.95) 100%);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+        }
+
+        .stream-top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.85rem 1.25rem;
+            background: rgba(255,81,0,0.06);
+            border-bottom: 1px solid rgba(255,81,0,0.15);
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .stream-title {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .live-dot {
+            width: 10px; height: 10px;
+            background: #ff5100;
+            border-radius: 50%;
+            animation: liveDot 1.5s infinite;
+        }
+
+        @keyframes liveDot {
+            0%, 100% { opacity: 1; }
+            50%       { opacity: 0.3; }
+        }
+
+        .stream-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-stream-ext {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0.45rem 1rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.25s;
+            cursor: pointer;
+        }
+
+        .btn-stream-ext:hover {
+            background: var(--gradient-1);
+            border-color: transparent;
+            box-shadow: 0 0 12px rgba(27,117,240,0.4);
+        }
+
+        .btn-fullscreen {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0.45rem 1rem;
+            background: rgba(27,117,240,0.1);
+            border: 1px solid rgba(27,117,240,0.25);
+            border-radius: 10px;
+            color: var(--primary-color);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .btn-fullscreen:hover {
+            background: rgba(27,117,240,0.2);
+        }
+
+        .stream-iframe-wrap {
+            position: relative;
+            padding-top: 56.25%; /* 16:9 */
+            background: #000;
+        }
+
+        .stream-iframe-wrap iframe {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .stream-notice {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .stream-notice .notice-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .stream-notice p { margin-top: 0.5rem; }
+
+        /* ── Zone Switcher ── */
+        .zone-switcher {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.85rem 1.25rem;
+            border-bottom: 1px solid rgba(255,81,0,0.12);
+            background: rgba(0,0,0,0.2);
+        }
+
+        .zone-btn {
+            padding: 0.45rem 1.1rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.83rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s;
+            white-space: nowrap;
+        }
+
+        .zone-btn:hover {
+            background: rgba(255,81,0,0.1);
+            border-color: rgba(255,81,0,0.3);
+            color: #ff5100;
+        }
+
+        .zone-btn.active {
+            background: rgba(255,81,0,0.18);
+            border-color: rgba(255,81,0,0.5);
+            color: #ff5100;
+            box-shadow: 0 0 10px rgba(255,81,0,0.2);
+        }
+
+        /* ── Event watch button style ── */
+        .event-watch-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 10px;
+            padding: 6px 14px;
+            background: rgba(255, 81, 0, 0.12);
+            border: 1px solid rgba(255, 81, 0, 0.35);
+            border-radius: 8px;
+            color: #ff5100;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            font-family: inherit;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .event-watch-btn:hover {
+            background: rgba(255, 81, 0, 0.25);
+            border-color: rgba(255, 81, 0, 0.55);
+            transform: translateY(-1.5px);
+            box-shadow: 0 6px 15px rgba(255, 81, 0, 0.2);
         }
     </style>
 </head>
@@ -570,10 +901,21 @@
 
             <!-- Navigation Tabs -->
             <nav class="details-tabs">
+                <button class="details-tab-btn" id="tab-stream" data-tab="stream">
+                    <span class="stream-badge">🔴 LIVE</span> مشاهدة مباشرة
+                </button>
                 <button class="details-tab-btn active" data-tab="events" data-en="Match Events" data-ar="أحداث المباراة">أحداث المباراة</button>
                 <button class="details-tab-btn" data-tab="stats" data-en="Statistics" data-ar="الإحصائيات">الإحصائيات</button>
                 <button class="details-tab-btn" data-tab="lineups" data-en="Lineups" data-ar="التشكيلة">التشكيلة</button>
+                <button class="details-tab-btn" data-tab="standings" data-en="Standings" data-ar="الترتيب">الترتيب</button>
             </nav>
+
+            <!-- Stream Panel -->
+            <section class="tab-panel" id="panel-stream">
+                <div id="streamContainer">
+                    <!-- Stream populated dynamically -->
+                </div>
+            </section>
 
             <!-- Events Panel -->
             <section class="tab-panel active" id="panel-events">
@@ -593,6 +935,13 @@
             <section class="tab-panel" id="panel-lineups">
                 <div id="lineupsContainer">
                     <!-- Lineups populated dynamically -->
+                </div>
+            </section>
+
+            <!-- Standings Panel -->
+            <section class="tab-panel" id="panel-standings">
+                <div class="standings-card" id="standingsContainer">
+                    <!-- Standings populated dynamically -->
                 </div>
             </section>
         </div>
