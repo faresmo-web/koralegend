@@ -71,7 +71,7 @@
         .admin-content { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; position: relative; z-index: 1; }
 
         /* ─── Stats ─── */
-        .stats-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+        .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
         .stat-card { background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%); border: 1px solid var(--border); border-radius: 16px; padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 1rem; }
         .stat-icon { font-size: 2rem; width: 55px; height: 55px; display: flex; align-items: center; justify-content: center; border-radius: 14px; background: rgba(27,117,240,0.12); flex-shrink: 0; }
         .stat-info .num { font-size: 1.8rem; font-weight: 900; color: #fff; }
@@ -223,6 +223,10 @@
                 <div class="stat-info"><div class="num" id="statStreams">0</div><div class="lbl">روابط مشاهدة نشطة</div></div>
             </div>
             <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-info"><div class="num" id="statViewers">0</div><div class="lbl">إجمالي المشاهدين حالياً</div></div>
+            </div>
+            <div class="stat-card">
                 <div class="stat-icon">⚽</div>
                 <div class="stat-info"><div class="num" id="statMatches">0</div><div class="lbl">مباريات متاحة</div></div>
             </div>
@@ -255,7 +259,7 @@
             <button class="btn-close-modal" onclick="closePreview()">✕</button>
         </div>
         <div class="preview-body">
-            <iframe id="previewIframe" src="about:blank" allowfullscreen allow="autoplay; fullscreen; picture-in-picture"></iframe>
+            <iframe id="previewIframe" src="about:blank" allow="autoplay; fullscreen; picture-in-picture"></iframe>
         </div>
     </div>
 </div>
@@ -266,6 +270,7 @@
 let adminPassword = '';
 let allStreams     = {};
 let allMatches    = [];
+let viewersInterval = null;
 
 // ─── Login ──────────────────────────────────────────
 document.getElementById('passwordInput').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
@@ -292,6 +297,10 @@ function showLoginError() {
 
 function doLogout() {
     adminPassword = '';
+    if (viewersInterval) {
+        clearInterval(viewersInterval);
+        viewersInterval = null;
+    }
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('adminPanel').style.display  = 'none';
     document.getElementById('passwordInput').value = '';
@@ -304,6 +313,9 @@ async function init() {
     updateStats();
     renderStreamsTable();
     renderMatchCards();
+    await loadViewers();
+    if (viewersInterval) clearInterval(viewersInterval);
+    viewersInterval = setInterval(loadViewers, 15000);
 }
 
 async function loadStreams() {
@@ -323,6 +335,28 @@ async function loadMatches() {
             (data.matches || []).forEach(m => { m._date = date; allMatches.push(m); });
         } catch {}
     }
+}
+
+async function loadViewers() {
+    try {
+        const res = await fetch('/api/admin/viewers', { headers: { 'x-admin-password': adminPassword } });
+        if (res.ok) {
+            const counts = await res.json();
+            let total = 0;
+            document.querySelectorAll('[id^="vbadge-"]').forEach(el => el.style.display = 'none');
+            
+            for (const [matchId, count] of Object.entries(counts)) {
+                total += count;
+                const badge = document.getElementById(`vbadge-${matchId}`);
+                const countEl = document.getElementById(`vcount-${matchId}`);
+                if (badge && countEl && count > 0) {
+                    countEl.textContent = count;
+                    badge.style.display = 'inline-flex';
+                }
+            }
+            document.getElementById('statViewers').textContent = total;
+        }
+    } catch (_) {}
 }
 
 // ─── Stats ──────────────────────────────────────────
@@ -380,8 +414,6 @@ function initMatchDataState(matchId) {
         const saved = allStreams[matchId];
         if (saved) {
             mainStreamState[matchId] = saved.mainStream || { iframeUrl: saved.iframeUrl || '', externalUrl: saved.externalUrl || '' };
-            
-            // Populate highlight/goal zones
             if (saved.zones && Array.isArray(saved.zones)) {
                 zonesState[matchId] = JSON.parse(JSON.stringify(saved.zones));
             } else {
@@ -389,25 +421,30 @@ function initMatchDataState(matchId) {
             }
         } else {
             mainStreamState[matchId] = { iframeUrl: '', externalUrl: '' };
-            zonesState[matchId]      = [];
+            zonesState[matchId] = [];
         }
     }
 }
 
 function buildMatchCard(m) {
-    const id = m.id || '';
-    const stream = allStreams[id];
-    const hasStream = !!stream;
-    
+    const id = m.id;
     initMatchDataState(id);
+    
+    const saved = allStreams[id];
+    const hasStream = !!saved;
     const mainStream = mainStreamState[id];
     const savedZones = zonesState[id];
     
-    const dateLabel = m._date === 'today' ? 'اليوم' : m._date === 'yesterday' ? 'أمس' : 'غداً';
-    const scoreStr  = (m.homeScore != null && m.awayScore != null) ? ` ${m.homeScore}-${m.awayScore} ` : ' vs ';
-
-    const homeLogo = m.homeLogo ? `<img src="${escHtml(m.homeLogo)}" class="team-logo-sm" onerror="this.style.display='none'">` : `<div class="team-logo-placeholder">🏠</div>`;
-    const awayLogo = m.awayLogo ? `<img src="${escHtml(m.awayLogo)}" class="team-logo-sm" onerror="this.style.display='none'">` : `<div class="team-logo-placeholder">✈️</div>`;
+    const homeLogo = m.homeLogo ? `<img src="${m.homeLogo}" class="team-logo-sm" alt="">` : `<div class="team-logo-placeholder">${m.homeTeam.slice(0, 2)}</div>`;
+    const awayLogo = m.awayLogo ? `<img src="${m.awayLogo}" class="team-logo-sm" alt="">` : `<div class="team-logo-placeholder">${m.awayTeam.slice(0, 2)}</div>`;
+    
+    const scoreStr = m.isFinished || m.isLive ? ` ${m.homeScore} - ${m.awayScore} ` : ' vs ';
+    
+    let dateLabel = '';
+    if (m._date === 'today') dateLabel = 'اليوم';
+    else if (m._date === 'yesterday') dateLabel = 'أمس';
+    else if (m._date === 'tomorrow') dateLabel = 'غداً';
+    else dateLabel = m.date || '';
 
     const zonesHtml = savedZones.map((z, i) => buildZoneItem(id, i, z)).join('');
 
@@ -423,6 +460,9 @@ function buildMatchCard(m) {
                         ${m.isLive ? '<span class="badge-live">🔴 مباشر</span>' : ''}
                         <span class="badge-zones ${hasStream ? 'visible' : ''}" id="zbadge-${id}">
                             📺 ${mainStream.iframeUrl || mainStream.externalUrl ? 'بث رئيسي + ' : ''}${savedZones.length} أهداف
+                        </span>
+                        <span class="badge-zones" id="vbadge-${id}" style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.35); color: var(--success); display: none; align-items: center; gap: 4px;">
+                            👥 <span id="vcount-${id}">0</span> مشاهد
                         </span>
                     </div>
                 </div>

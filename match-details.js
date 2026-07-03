@@ -183,7 +183,29 @@ async function loadAndRenderStream(matchId) {
         // Render with zone switcher (first video active)
         renderStreamZones(container, zones, 0);
 
+        // Start viewer counting heartbeat
+        startViewerHeartbeat(matchId);
+
     } catch (_) { /* silently fail */ }
+}
+
+let viewerHeartbeatInterval = null;
+function startViewerHeartbeat(matchId) {
+    if (viewerHeartbeatInterval) clearInterval(viewerHeartbeatInterval);
+    
+    let clientId = localStorage.getItem('kora_viewer_id');
+    if (!clientId) {
+        clientId = 'v_' + Math.random().toString(36).substring(2, 11);
+        localStorage.setItem('kora_viewer_id', clientId);
+    }
+
+    const beat = () => {
+        fetch(`/api/streams/heartbeat?matchId=${encodeURIComponent(matchId)}&clientId=${encodeURIComponent(clientId)}`)
+            .catch(() => {});
+    };
+
+    beat();
+    viewerHeartbeatInterval = setInterval(beat, 20000); // Send heartbeat every 20 seconds
 }
 
 function fixTwitchUrl(url) {
@@ -223,7 +245,6 @@ function renderStreamZones(container, zones, activeIdx) {
         <div class="stream-iframe-wrap">
             <iframe id="streamIframe"
                 src="${finalUrl}"
-                allowfullscreen
                 allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope"
             ></iframe>
         </div>`;
@@ -522,9 +543,12 @@ function renderEvents(details, stream) {
         let watchBtnHtml = '';
         if (stream && Array.isArray(stream.zones) && evt.min) {
             const eventMinVal = parseInt(evt.min) || 0;
+            const eventMinStr = String(evt.min).trim();
             const localIdx = stream.zones.findIndex(z => {
                 if (z.minute == null) return false;
-                return parseInt(z.minute) === eventMinVal;
+                const zoneMinVal = parseInt(z.minute) || 0;
+                const zoneMinStr = String(z.minute).trim();
+                return zoneMinVal === eventMinVal || zoneMinStr === eventMinStr;
             });
             
             if (localIdx !== -1) {
@@ -539,7 +563,7 @@ function renderEvents(details, stream) {
         }
 
         wrapper.innerHTML = `
-            <div class="timeline-event-content">
+            <div class="timeline-event-content" style="display:flex; flex-direction:column; align-items: ${evt.team === 'home' ? 'flex-end' : 'flex-start'}; gap: 4px;">
                 ${infoHtml}
                 ${watchBtnHtml}
             </div>
@@ -1055,7 +1079,7 @@ function startLivePolling(matchId, matchInfo) {
             const details = await res.json();
             
             // Update events
-            renderEvents(details);
+            renderEvents(details, window.matchStreamData);
             
             // Update stats
             renderStats(details);

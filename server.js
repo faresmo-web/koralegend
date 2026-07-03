@@ -98,6 +98,46 @@ function handleAdminDeleteStream(req, res) {
     sendJSON(res, { ok: true });
 }
 
+// ── Real-Time Viewer Tracking ────────────────────────────────
+const activeViewers = {}; // matchId -> { clientId: lastSeenTimestamp }
+
+function getActiveViewerCount(matchId) {
+    const now = Date.now();
+    const viewers = activeViewers[matchId] || {};
+    let count = 0;
+    for (const [clientId, ts] of Object.entries(viewers)) {
+        if (now - ts < 35000) { // 35 seconds threshold
+            count++;
+        } else {
+            delete viewers[clientId];
+        }
+    }
+    return count;
+}
+
+function handleStreamHeartbeat(req, res) {
+    const url      = new URL(req.url, 'http://localhost');
+    const matchId  = url.searchParams.get('matchId')  || '';
+    const clientId = url.searchParams.get('clientId') || '';
+
+    if (!matchId || !clientId) return sendJSON(res, { ok: false });
+
+    if (!activeViewers[matchId]) {
+        activeViewers[matchId] = {};
+    }
+    activeViewers[matchId][clientId] = Date.now();
+    sendJSON(res, { ok: true });
+}
+
+function handleAdminGetViewers(req, res) {
+    if (!checkAdminAuth(req)) return sendError(res, 401, 'Unauthorized');
+    const counts = {};
+    for (const matchId of Object.keys(activeViewers)) {
+        counts[matchId] = getActiveViewerCount(matchId);
+    }
+    sendJSON(res, counts);
+}
+
 // ── VAPID / Push Setup ───────────────────────────────────────
 const VAPID_FILE   = path.join(__dirname, 'vapid-keys.json');
 const SUBS_FILE    = path.join(__dirname, 'subscriptions.json');
@@ -1320,6 +1360,8 @@ const server = http.createServer((req, res) => {
     if (url === '/api/unsubscribe')       return handleUnsubscribe(req, res);
     // ── Streams API ──
     if (url === '/api/streams')           return handleGetStream(req, res);
+    if (url === '/api/streams/heartbeat') return handleStreamHeartbeat(req, res);
+    if (url === '/api/admin/viewers')     return handleAdminGetViewers(req, res);
     if (url === '/api/admin/streams') {
         if (req.method === 'GET')    return handleAdminGetStreams(req, res);
         if (req.method === 'POST')   return handleAdminUpsertStream(req, res);
