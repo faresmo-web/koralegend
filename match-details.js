@@ -1,6 +1,12 @@
 // Match Details Controller
 
 document.addEventListener('DOMContentLoaded', async function() {
+    // Force HTTPS on production for Twitch and security policies
+    if (window.location.protocol === 'http:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        window.location.href = window.location.href.replace('http:', 'https:');
+        return;
+    }
+
     // Update copyright year dynamically
     const currentYear = new Date().getFullYear();
     document.querySelectorAll('[data-en], [data-ar]').forEach(element => {
@@ -180,6 +186,20 @@ async function loadAndRenderStream(matchId) {
     } catch (_) { /* silently fail */ }
 }
 
+function fixTwitchUrl(url) {
+    if (!url || !url.includes('player.twitch.tv')) return url;
+    try {
+        const urlObj = new URL(url);
+        urlObj.searchParams.set('parent', window.location.hostname);
+        return urlObj.toString();
+    } catch (_) {
+        if (url.includes('parent=')) {
+            return url.replace(/parent=[^&]+/g, 'parent=' + window.location.hostname);
+        }
+        return url + (url.includes('?') ? '&' : '?') + 'parent=' + window.location.hostname;
+    }
+}
+
 function renderStreamZones(container, zones, activeIdx) {
     const zone = zones[activeIdx];
 
@@ -198,10 +218,11 @@ function renderStreamZones(container, zones, activeIdx) {
     // Iframe or notice
     let iframeHtml = '';
     if (zone.iframeUrl) {
+        const finalUrl = fixTwitchUrl(zone.iframeUrl);
         iframeHtml = `
         <div class="stream-iframe-wrap">
             <iframe id="streamIframe"
-                src="${zone.iframeUrl}"
+                src="${finalUrl}"
                 allowfullscreen
                 allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope"
             ></iframe>
