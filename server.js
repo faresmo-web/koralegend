@@ -885,6 +885,37 @@ async function handleMatches(req, res) {
         }
     }
 
+    // ── Midnight live-match fix ───────────────────────────────
+    // When requesting today's matches, check if we're in the first 3 hours of Cairo midnight.
+    // If so, also fetch yesterday's matches and include any still-live ones.
+    // This prevents live matches from disappearing when crossing midnight.
+    if (reqDate === 'today' || reqDate === 'YYYY-MM-DD') {
+        try {
+            const cairoHour = parseInt(
+                new Date().toLocaleTimeString('en-CA', { timeZone: TIMEZONE, hour: '2-digit', hour12: false })
+            );
+            // In first 3 hours after midnight, live matches may still be from "yesterday"
+            if (cairoHour < 3) {
+                const yesterdayMatches = await fetchMatchesYSScores('yesterday').catch(() => []);
+                const stillLive = yesterdayMatches.filter(m => m.isLive);
+                if (stillLive.length > 0) {
+                    // Merge: avoid duplicates by ID
+                    const existingIds = new Set(matches.map(m => m.id));
+                    for (const m of stillLive) {
+                        if (!existingIds.has(m.id)) {
+                            matches.push(m);
+                            existingIds.add(m.id);
+                        }
+                    }
+                    console.log(`[midnight-fix] Merged ${stillLive.length} still-live match(es) from yesterday`);
+                }
+            }
+        } catch (e) {
+            // Non-fatal: ignore errors in midnight fix
+            console.warn('[midnight-fix] Error:', e.message);
+        }
+    }
+
     // Sort: live first, then upcoming by time, then finished
     matches.sort((a, b) => {
         const rank = m => m.isLive ? 0 : (!m.isFinished ? 1 : 2);
@@ -899,6 +930,7 @@ async function handleMatches(req, res) {
     setCache(cacheKey, result, ttl);
     sendJSON(res, result);
 }
+
 
 // ── API: GET /api/league?id=...&slug=... ────────────────────
 async function handleLeague(req, res) {

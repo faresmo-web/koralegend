@@ -6,6 +6,7 @@ const BASE_URL = 'https://www.ysscores.com/ar';
 let sessionToken = '';
 let sessionCookie = '';
 let lastSessionTime = 0;
+let timezoneSet = false;
 
 async function ensureSession() {
     // Refresh session token every 1 hour
@@ -22,11 +23,38 @@ async function ensureSession() {
         const cookies = r.headers['set-cookie'];
         sessionCookie = cookies ? cookies.map(c => c.split(';')[0]).join('; ') : '';
         lastSessionTime = Date.now();
+        timezoneSet = false; // reset so we re-set timezone on new session
         console.log(`[ysscores] Session ready. Token: ${sessionToken ? 'OK' : 'MISSING'}`);
+
+        // Set timezone to KSA/Cairo (UTC+3) so match times are displayed correctly
+        await setTimezoneKSA();
+
         return true;
     } catch (e) {
         console.error('[ysscores] Session init error:', e.message);
         return false;
+    }
+}
+
+async function setTimezoneKSA() {
+    if (timezoneSet || !sessionToken) return;
+    try {
+        // ysscores uses /change_timezone/ksa to set KSA/Cairo (UTC+3) timezone
+        const tzUrl = `${BASE_URL.replace('/ar', '')}/change_timezone/ksa`;
+        await axios.get(tzUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Cookie': sessionCookie,
+                'Referer': `${BASE_URL}/index`,
+                'Accept': 'application/json, text/javascript, */*',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            timeout: 8000,
+        });
+        timezoneSet = true;
+        console.log('[ysscores] Timezone set to KSA/Cairo (UTC+3)');
+    } catch (e) {
+        console.warn('[ysscores] Could not set timezone:', e.message);
     }
 }
 
