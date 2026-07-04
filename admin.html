@@ -622,14 +622,69 @@ async function deleteStream(matchId) {
     try { await fetch(`/api/admin/streams?matchId=${encodeURIComponent(matchId)}`, { method: 'DELETE', headers: { 'x-admin-password': adminPassword } }); } catch {}
 }
 
+function isTwitterUrl(url) {
+    return url && (url.includes('x.com') || url.includes('twitter.com'));
+}
+
+function extractTweetId(url) {
+    const match = (url || '').match(/\/(?:status|statuses)\/(\d+)/);
+    return match ? match[1] : null;
+}
+
 function previewZone(url) {
     if (!url) { showToast('⚠️ لا يوجد رابط', 'error'); return; }
-    document.getElementById('previewIframe').src = url;
+    
+    const bodyContainer = document.querySelector('.preview-body');
+    if (!bodyContainer) return;
+    
+    if (isTwitterUrl(url)) {
+        const tweetId = extractTweetId(url);
+        if (tweetId) {
+            bodyContainer.innerHTML = `
+            <div id="twitterPreviewContainer" style="display:flex; justify-content:center; align-items:center; padding:2rem; min-height:350px; width:100%; overflow-y:auto; max-height:70vh;">
+                <div id="tweetEmbedPreview" style="width:100%; max-width:500px;">
+                    <div style="text-align:center; color:var(--text-dim);">جاري تحميل معاينة التغريدة من X...</div>
+                </div>
+            </div>`;
+            
+            const loadTweet = () => {
+                const previewEl = document.getElementById('tweetEmbedPreview');
+                if (previewEl) previewEl.innerHTML = '';
+                window.twttr.widgets.createTweet(tweetId, previewEl, {
+                    theme: 'dark',
+                    align: 'center',
+                    conversation: 'none',
+                    width: 500
+                });
+            };
+            
+            if (window.twttr && window.twttr.widgets) {
+                loadTweet();
+            } else {
+                const script = document.createElement('script');
+                script.src = 'https://platform.twitter.com/widgets.js';
+                script.charset = 'utf-8';
+                script.async = true;
+                document.body.appendChild(script);
+                script.onload = loadTweet;
+            }
+        } else {
+            bodyContainer.innerHTML = `
+            <div style="text-align:center; padding:3rem; color:var(--text-dim);">
+                <p style="font-size:1.1rem; font-weight:700; color:#fff; margin-bottom:1rem;">🔗 رابط منصة X (تويتر)</p>
+                <p>تمنع منصة X تشغيل البث المباشر المدمج (iframe). يمكنك فتح الرابط مباشرة:</p>
+                <a href="${url}" target="_blank" style="display:inline-block; margin-top:1.5rem; background:var(--primary); color:#fff; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:700;">🌐 فتح الرابط في نافذة جديدة</a>
+            </div>`;
+        }
+    } else {
+        bodyContainer.innerHTML = `<iframe id="previewIframe" src="${url}" allow="autoplay; fullscreen; picture-in-picture" style="width:100%; height:100%; min-height:450px; border:none;"></iframe>`;
+    }
     document.getElementById('previewModal').classList.add('open');
 }
 
 function closePreview() {
-    document.getElementById('previewIframe').src = 'about:blank';
+    const bodyContainer = document.querySelector('.preview-body');
+    if (bodyContainer) bodyContainer.innerHTML = '<iframe id="previewIframe" src="about:blank" style="width:100%; height:100%; min-height:450px; border:none;"></iframe>';
     document.getElementById('previewModal').classList.remove('open');
 }
 document.getElementById('previewModal').addEventListener('click', function(e) { if (e.target === this) closePreview(); });

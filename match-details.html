@@ -843,6 +843,38 @@
             transform: translateY(-1.5px);
             box-shadow: 0 6px 15px rgba(255, 81, 0, 0.2);
         }
+
+        /* ── Clips Drawer ── */
+        #clipsDrawer {
+            margin-top: 1rem;
+            background: linear-gradient(135deg, rgba(13,20,44,0.95) 0%, rgba(6,9,25,0.98) 100%);
+            border: 1px solid rgba(255,81,0,0.25);
+            border-radius: 16px;
+            overflow: hidden;
+            animation: drawerSlideIn 0.3s ease;
+        }
+
+        @keyframes drawerSlideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .clips-drawer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1.1rem;
+            background: rgba(255,81,0,0.08);
+            border-bottom: 1px solid rgba(255,81,0,0.15);
+            font-weight: 700;
+            font-size: 0.9rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        #clipsDrawerBody .stream-iframe-wrap {
+            border-radius: 0;
+        }
     </style>
 </head>
 <body>
@@ -912,8 +944,23 @@
 
             <!-- Stream Panel -->
             <section class="tab-panel" id="panel-stream">
-                <div id="streamContainer">
-                    <!-- Stream populated dynamically -->
+                <!-- Main broadcast: always stays here -->
+                <div id="mainStreamContainer">
+                    <!-- Populated by JS -->
+                </div>
+
+                <!-- Clips Drawer: appears below when user clicks a goal clip -->
+                <div id="clipsDrawer" style="display:none;">
+                    <div class="clips-drawer-header">
+                        <span id="clipDrawerTitle">⚽ اللقطة</span>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <a id="clipDrawerExtLink" href="#" target="_blank" rel="noopener" class="btn-stream-ext" style="display:none; font-size:0.78rem; padding:4px 10px;">🌐 نافذة جديدة</a>
+                            <button onclick="closeClipsDrawer()" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-secondary); border-radius:8px; padding:4px 10px; cursor:pointer; font-family:inherit; font-size:0.82rem;">✕ إغلاق</button>
+                        </div>
+                    </div>
+                    <div id="clipsDrawerBody">
+                        <!-- Clip iframe/tweet will be injected here -->
+                    </div>
                 </div>
             </section>
 

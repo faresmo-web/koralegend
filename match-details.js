@@ -137,51 +137,42 @@ async function loadAndRenderStream(matchId) {
         const stream = window.matchStreamData;
 
         const tabBtn    = document.getElementById('tab-stream');
-        const container = document.getElementById('streamContainer');
+        const container = document.getElementById('mainStreamContainer');
         if (!tabBtn || !container || !stream) return;
 
-        // Build list of video feeds
-        let zones = [];
-        
-        // 1. Add Main Broadcast if configured
-        if (stream.mainStream && (stream.mainStream.iframeUrl || stream.mainStream.externalUrl)) {
-            zones.push({
-                label: '📡 البث المباشر للمباراة',
-                iframeUrl: stream.mainStream.iframeUrl || '',
-                externalUrl: stream.mainStream.externalUrl || '',
-                isMain: true
-            });
-        }
+        // Check if there is anything to show
+        const hasMain  = stream.mainStream && (stream.mainStream.iframeUrl || stream.mainStream.externalUrl);
+        const hasZones = Array.isArray(stream.zones) && stream.zones.length > 0;
+        const hasFallback = !hasMain && (stream.iframeUrl || stream.externalUrl);
 
-        // 2. Add Goals/Highlights (zones)
-        if (Array.isArray(stream.zones)) {
-            stream.zones.forEach(z => {
-                zones.push({
-                    label: z.label || 'لقطة هامة',
-                    iframeUrl: z.iframeUrl || '',
-                    externalUrl: z.externalUrl || '',
-                    isMain: false
-                });
-            });
-        }
-
-        // 3. Fallback to old format
-        if (!zones.length && (stream.iframeUrl || stream.externalUrl)) {
-            zones.push({
-                label: stream.label || 'مشاهدة مباشرة',
-                iframeUrl: stream.iframeUrl || '',
-                externalUrl: stream.externalUrl || '',
-                isMain: true
-            });
-        }
-
-        if (!zones.length) return;
+        if (!hasMain && !hasZones && !hasFallback) return;
 
         // Show the tab
         tabBtn.classList.add('visible');
 
-        // Render with zone switcher (first video active)
-        renderStreamZones(container, zones, 0);
+        // --- Render MAIN stream (always in mainStreamContainer) ---
+        if (hasMain) {
+            renderMainStream(container, stream.mainStream);
+        } else if (hasFallback) {
+            renderMainStream(container, { iframeUrl: stream.iframeUrl || '', externalUrl: stream.externalUrl || '' });
+        } else {
+            // No main stream — show placeholder so user knows clips are available
+            container.innerHTML = `
+            <div class="stream-card">
+                <div class="stream-top-bar">
+                    <div class="stream-title"><span class="live-dot"></span>أهداف ولقطات المباراة</div>
+                </div>
+                <div class="stream-notice">
+                    <div class="notice-icon">⚽</div>
+                    <p style="font-size:1rem;font-weight:700;color:var(--text-primary)">اضغط على أي هدف في الأحداث لمشاهدته</p>
+                    <p style="font-size:0.85rem;color:var(--text-secondary);margin-top:6px">متوفر ${hasZones ? stream.zones.length + ' لقطة' : ''}</p>
+                </div>
+            </div>`;
+        }
+
+        // Store zones globally for event-clip access
+        window._streamZonesData = stream.zones || [];
+        window._streamHasMain   = hasMain || hasFallback;
 
         // Start viewer counting heartbeat
         startViewerHeartbeat(matchId);
@@ -222,64 +213,150 @@ function fixTwitchUrl(url) {
     }
 }
 
-function renderStreamZones(container, zones, activeIdx) {
-    const zone = zones[activeIdx];
+function isTwitterUrl(url) {
+    if (!url) return false;
+    return url.includes('x.com') || url.includes('twitter.com');
+}
 
-    // Zone switcher buttons
-    const switcherHtml = zones.length > 1
-        ? `<div class="zone-switcher">
-            ${zones.map((z, i) => `
-                <button class="zone-btn ${i === activeIdx ? 'active' : ''}"
-                        onclick="switchZone(this, ${i})"
-                        data-idx="${i}">
-                    ${z.isMain ? '📡' : '⚽'} ${escHtml(z.label)}
-                </button>`).join('')}
-           </div>`
-        : '';
+function extractTweetId(url) {
+    if (!url) return null;
+    const match = url.match(/\/(?:status|statuses)\/(\d+)/);
+    return match ? match[1] : null;
+}
 
-    // Iframe or notice
-    let iframeHtml = '';
-    if (zone.iframeUrl) {
-        const finalUrl = fixTwitchUrl(zone.iframeUrl);
-        iframeHtml = `
+// Renders the MAIN broadcast in mainStreamContainer
+function renderMainStream(container, mainStream) {
+    const targetUrl = mainStream.iframeUrl || mainStream.externalUrl || '';
+
+    let bodyHtml = '';
+    if (!targetUrl) return;
+
+    if (isTwitterUrl(targetUrl)) {
+        const tweetId = extractTweetId(targetUrl);
+        if (tweetId) {
+            bodyHtml = `
+            <div class="stream-twitter-wrap" style="display:flex;justify-content:center;padding:1.5rem;background:rgba(0,0,0,0.2);border-radius:12px;min-height:250px;align-items:center;width:100%;">
+                <div id="mainTweetContainer" style="width:100%;max-width:550px;">
+                    <div style="text-align:center;color:var(--text-secondary);font-size:0.9rem;"><p>جاري تحميل البث...</p></div>
+                </div>
+            </div>`;
+            setTimeout(() => {
+                const el = document.getElementById('mainTweetContainer');
+                if (!el) return;
+                const load = () => { el.innerHTML = ''; window.twttr.widgets.createTweet(tweetId, el, { theme:'dark', align:'center', conversation:'none', width:550 }); };
+                if (window.twttr?.widgets) { load(); } else {
+                    const s = document.createElement('script'); s.src='https://platform.twitter.com/widgets.js'; s.async=true; document.body.appendChild(s); s.onload=load;
+                }
+            }, 50);
+        } else {
+            bodyHtml = `<div class="stream-notice"><div class="notice-icon">🐦</div><p style="font-size:1rem;font-weight:700;color:var(--text-primary)">البث موجود على X</p><a href="${targetUrl}" target="_blank" rel="noopener" class="btn-stream-ext" style="margin-top:1rem;display:inline-flex">🌐 افتحه في نافذة جديدة</a></div>`;
+        }
+    } else if (mainStream.iframeUrl) {
+        const finalUrl = fixTwitchUrl(mainStream.iframeUrl);
+        bodyHtml = `
         <div class="stream-iframe-wrap">
-            <iframe id="streamIframe"
+            <iframe id="mainStreamIframe"
+                src="${finalUrl}"
+                allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope"
+            ></iframe>
+        </div>`;
+    } else {
+        bodyHtml = `
+        <div class="stream-notice">
+            <div class="notice-icon">📺</div>
+            <p style="font-size:1rem;font-weight:700;color:var(--text-primary)">بث مباشر</p>
+            <a href="${mainStream.externalUrl}" target="_blank" rel="noopener" class="btn-stream-ext" style="margin-top:1rem;display:inline-flex">🌐 شاهد الآن</a>
+        </div>`;
+    }
+
+    const fullscreenBtn = mainStream.iframeUrl && !isTwitterUrl(mainStream.iframeUrl)
+        ? `<button class="btn-fullscreen" onclick="document.getElementById('mainStreamIframe')?.requestFullscreen()">□ ملء الشاشة</button>` : '';
+    const extBtn = mainStream.externalUrl
+        ? `<a class="btn-stream-ext" href="${mainStream.externalUrl}" target="_blank" rel="noopener">🌐 نافذة جديدة</a>` : '';
+
+    container.innerHTML = `
+    <div class="stream-card">
+        <div class="stream-top-bar">
+            <div class="stream-title"><span class="live-dot"></span>📡 البث المباشر</div>
+            <div class="stream-actions">${fullscreenBtn}${extBtn}</div>
+        </div>
+        ${bodyHtml}
+    </div>`;
+}
+
+// Open a clip in the drawer below the main stream (does NOT touch the main stream)
+function renderClipInDrawer(zone) {
+    const drawer     = document.getElementById('clipsDrawer');
+    const drawerBody = document.getElementById('clipsDrawerBody');
+    const titleEl    = document.getElementById('clipDrawerTitle');
+    const extLinkEl  = document.getElementById('clipDrawerExtLink');
+    if (!drawer || !drawerBody) return;
+
+    titleEl.textContent = (zone.isMain ? '📡' : '⚽') + ' ' + (zone.label || 'لقطة');
+
+    if (zone.externalUrl) {
+        extLinkEl.href = zone.externalUrl;
+        extLinkEl.style.display = 'inline-flex';
+    } else {
+        extLinkEl.style.display = 'none';
+    }
+
+    const targetUrl = zone.iframeUrl || zone.externalUrl || '';
+    let bodyHtml = '';
+
+    if (isTwitterUrl(targetUrl)) {
+        const tweetId = extractTweetId(targetUrl);
+        if (tweetId) {
+            drawerBody.innerHTML = `
+            <div style="display:flex;justify-content:center;padding:1.5rem;background:rgba(0,0,0,0.2);min-height:200px;align-items:center;">
+                <div id="clipTweetContainer" style="width:100%;max-width:550px;">
+                    <div style="text-align:center;color:var(--text-secondary);"><p>جاري تحميل اللقطة...</p></div>
+                </div>
+            </div>`;
+            setTimeout(() => {
+                const el = document.getElementById('clipTweetContainer');
+                if (!el) return;
+                const load = () => { el.innerHTML=''; window.twttr.widgets.createTweet(tweetId, el, {theme:'dark',align:'center',conversation:'none',width:500}); };
+                if (window.twttr?.widgets) { load(); } else {
+                    const s=document.createElement('script'); s.src='https://platform.twitter.com/widgets.js'; s.async=true; document.body.appendChild(s); s.onload=load;
+                }
+            }, 50);
+            drawer.style.display = 'block';
+            return;
+        } else {
+            bodyHtml = `<div class="stream-notice" style="padding:2rem 1rem;"><div class="notice-icon">🐦</div><p style="font-weight:700;color:var(--text-primary)">اللقطة على X (تويتر)</p><a href="${targetUrl}" target="_blank" rel="noopener" class="btn-stream-ext" style="margin-top:1rem;display:inline-flex">🌐 افتحها في نافذة جديدة</a></div>`;
+        }
+    } else if (zone.iframeUrl) {
+        const finalUrl = fixTwitchUrl(zone.iframeUrl);
+        bodyHtml = `
+        <div class="stream-iframe-wrap">
+            <iframe id="clipDrawerIframe"
                 src="${finalUrl}"
                 allow="autoplay; fullscreen; picture-in-picture; encrypted-media; accelerometer; gyroscope"
             ></iframe>
         </div>`;
     } else if (zone.externalUrl) {
-        iframeHtml = `
-        <div class="stream-notice">
-            <div class="notice-icon">📺</div>
-            <p style="font-size:1rem;font-weight:700;color:var(--text-primary)">${escHtml(zone.label||'مشاهدة مباشرة')}</p>
-            <a href="${zone.externalUrl}" target="_blank" rel="noopener" class="btn-stream-ext" style="margin-top:1rem;display:inline-flex">🌐 شاهد الآن</a>
-        </div>`;
+        bodyHtml = `<div class="stream-notice" style="padding:2rem 1rem;"><div class="notice-icon">📺</div><p style="font-weight:700;color:var(--text-primary)">${escHtml(zone.label||'مشاهدة')}</p><a href="${zone.externalUrl}" target="_blank" rel="noopener" class="btn-stream-ext" style="margin-top:1rem;display:inline-flex">🌐 شاهد الآن</a></div>`;
     }
 
-    const fullscreenBtn = zone.iframeUrl
-        ? `<button class="btn-fullscreen" onclick="document.getElementById('streamIframe')?.requestFullscreen()">⛶ ملء الشاشة</button>` : '';
-    const extBtn = zone.externalUrl
-        ? `<a class="btn-stream-ext" href="${zone.externalUrl}" target="_blank" rel="noopener">🌐 نافذة جديدة</a>` : '';
-
-    container.innerHTML = `
-    <div class="stream-card">
-        ${switcherHtml}
-        <div class="stream-top-bar">
-            <div class="stream-title"><span class="live-dot"></span>${escHtml(zone.label||'مشاهدة مباشرة')}</div>
-            <div class="stream-actions">${fullscreenBtn}${extBtn}</div>
-        </div>
-        ${iframeHtml}
-    </div>`;
-
-    // Store zones on container for switching
-    container._streamZones = zones;
+    drawerBody.innerHTML = bodyHtml;
+    drawer.style.display = 'block';
+    drawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-function switchZone(btn, idx) {
-    const container = document.getElementById('streamContainer');
-    if (!container || !container._streamZones) return;
-    renderStreamZones(container, container._streamZones, idx);
+function closeClipsDrawer() {
+    const drawer = document.getElementById('clipsDrawer');
+    if (!drawer) return;
+    // Stop any playing iframe
+    const iframe = document.getElementById('clipDrawerIframe');
+    if (iframe) iframe.src = 'about:blank';
+    drawer.style.display = 'none';
+    document.getElementById('clipsDrawerBody').innerHTML = '';
+}
+
+// Legacy: renderStreamZones now only renders clips — used by old zone-switcher (not used in new layout)
+function renderStreamZones(container, zones, activeIdx) {
+    // No-op in the new split layout
 }
 
 function escHtml(s) {
@@ -552,11 +629,8 @@ function renderEvents(details, stream) {
             });
             
             if (localIdx !== -1) {
-                const hasMainStream = stream.mainStream && (stream.mainStream.iframeUrl || stream.mainStream.externalUrl);
-                const globalIdx = hasMainStream ? localIdx + 1 : localIdx;
-                
                 watchBtnHtml = `
-                <button class="event-watch-btn" onclick="playEventClip(${globalIdx})" title="شاهد اللقطة">
+                <button class="event-watch-btn" onclick="playEventClip(${localIdx})" title="شاهد اللقطة">
                     📺 شاهد اللقطة
                 </button>`;
             }
@@ -575,25 +649,30 @@ function renderEvents(details, stream) {
     });
 }
 
-// Global action to switch stream channel/tab
-window.playEventClip = function(idx) {
-    // 1. Find stream tab button
+// Global action: opens clip in the drawer WITHOUT closing the main stream
+window.playEventClip = function(zoneIdx) {
+    const zones = window._streamZonesData || [];
+    if (!zones.length) return;
+
+    const zone = zones[zoneIdx];
+    if (!zone) return;
+
+    // Switch to stream tab first if not already visible
     const tabStreamBtn = document.getElementById('tab-stream');
-    if (tabStreamBtn) {
+    if (tabStreamBtn && !document.getElementById('panel-stream')?.classList.contains('active')) {
         tabStreamBtn.click();
     }
-    
-    // 2. Scroll to container
-    const container = document.getElementById('streamContainer');
-    if (container) {
-        container.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        // 3. Switch active stream/highlight
-        if (container._streamZones) {
-            renderStreamZones(container, container._streamZones, idx);
-        }
-    }
+
+    // Render clip in the drawer (below main stream) without touching main stream
+    renderClipInDrawer(zone);
+
+    // Scroll drawer into view smoothly
+    setTimeout(() => {
+        document.getElementById('clipsDrawer')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
 };
+
+window.closeClipsDrawer = closeClipsDrawer;
 
 function renderStats(details) {
     const container = document.getElementById('statsCard');
