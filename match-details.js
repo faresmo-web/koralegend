@@ -370,10 +370,15 @@ function renderHeroCard(match, details, dateType) {
     
     const isLive = match.isLive;
     const isUpcoming = !match.isLive && !match.isFinished;
+    const statusText = match.statusAr || match.status || '';
+    const isHalfTime = match.isHalfTime || statusText === 'استراحة';
+    const isExtraTime = match.isExtraTime || statusText === 'وقت إضافي' || statusText === 'ركلات الترجيح' || statusText === 'و.إ';
     
     let statusClass = 'finished';
-    if (isLive) statusClass = 'live';
-    else if (isUpcoming) statusClass = 'upcoming';
+    if (isHalfTime)  statusClass = 'half-time';
+    else if (isExtraTime) statusClass = 'extra-time';
+    else if (isLive)      statusClass = 'live';
+    else if (isUpcoming)  statusClass = 'upcoming';
     
     const homeScore = match.homeScore !== null && match.homeScore !== undefined ? match.homeScore : '0';
     const awayScore = match.awayScore !== null && match.awayScore !== undefined ? match.awayScore : '0';

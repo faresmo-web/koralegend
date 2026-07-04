@@ -1,5 +1,10 @@
-// Theme management (Immediate execution to prevent flash)
+// Theme management & HTTPS Enforcing (Immediate execution to prevent flash and ensure secure context for Service Workers)
 (function() {
+    // Force HTTPS on production for Push Notification support and security policies
+    if (window.location.protocol === 'http:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && window.location.hostname !== '192.168.1.100') {
+        window.location.href = window.location.href.replace('http:', 'https:');
+        return;
+    }
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
 })();

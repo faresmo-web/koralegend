@@ -171,6 +171,20 @@ async function fetchMatchesForDate(dateStr, dateLabel) {
                 }
             }
 
+            // Detect isHalfTime and isExtraTime from statusAr
+            const isHalfTime = isLive && (
+                statusAr.includes('استراحة') ||
+                statusAr.includes('نصف الوقت') ||
+                statusAr === 'HT' ||
+                statusAr === 'ht'
+            );
+            const isExtraTime = isLive && !isHalfTime && (
+                statusAr.includes('وقت إضافي') ||
+                statusAr.includes('وقت اضافي') ||
+                statusAr.includes('ركلات') ||
+                (statusAr.match(/^(\d+)'/) && parseInt(statusAr) > 90)
+            );
+
             // homePenaltyScore / awayPenaltyScore
             let homePenaltyScore = null;
             let awayPenaltyScore = null;
@@ -214,6 +228,8 @@ async function fetchMatchesForDate(dateStr, dateLabel) {
                 statusAr,
                 isLive,
                 isFinished,
+                isHalfTime: isHalfTime || false,
+                isExtraTime: isExtraTime || false,
                 date: dateLabel,
                 startTime: `${dateStr}T00:00:00`,
                 round: '',

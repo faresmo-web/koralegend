@@ -279,17 +279,7 @@
                     ${a.author ? `<span>✍️ ${a.author}</span>` : ''}
                 </div>
                 ${a.image ? `<img src="${a.image}" alt="${a.headline}" class="article-hero-img" loading="lazy">` : ''}
-                <!-- Ad Unit: Inside Article -->
-                <div class="ad-container ad-horizontal" style="max-width:100%;">
-                    <span class="ad-label">إعلان</span>
-                    <ins class="adsbygoogle"
-                         style="display:block"
-                         data-ad-client="ca-pub-8486549501295296"
-                         data-ad-slot="YYYYYYYYYY"
-                         data-ad-format="auto"
-                         data-full-width-responsive="true"></ins>
-                    <script>(adsbygoogle = window.adsbygoogle || []).push({});<\/script>
-                </div>
+
                 <div class="article-body">${a.body}</div>
                 ${tagsHtml}
             `;

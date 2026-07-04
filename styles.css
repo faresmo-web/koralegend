@@ -459,6 +459,20 @@ body::after {
     color: var(--accent-color);
 }
 
+/* استراحة (بين الشوطين) - Half Time */
+.status-half-time {
+    background: rgba(255, 140, 0, 0.2);
+    color: #ff8c00;
+    font-weight: 800;
+}
+
+/* وقت إضافي - Extra Time */
+.status-extra-time {
+    background: rgba(147, 51, 234, 0.2);
+    color: #a855f7;
+    font-weight: 800;
+}
+
 @keyframes blink {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.6; }
@@ -1422,6 +1436,22 @@ body::after {
 .match-status-badge.status-upcoming {
     background: rgba(0, 212, 255, 0.15);
     color: var(--accent-color);
+}
+
+/* استراحة (بين الشوطين) */
+.match-status-badge.status-half-time {
+    background: rgba(255, 140, 0, 0.18);
+    border: 1px solid rgba(255, 140, 0, 0.55);
+    color: #ff8c00;
+    font-weight: 800;
+}
+
+/* وقت إضافي / ركلات الترجيح */
+.match-status-badge.status-extra-time {
+    background: rgba(147, 51, 234, 0.18);
+    border: 1px solid rgba(147, 51, 234, 0.55);
+    color: #a855f7;
+    font-weight: 800;
 }
 
 /* Circular Live Clock (White Design Inspired) */

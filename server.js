@@ -153,7 +153,7 @@ try {
 }
 
 webPush.setVapidDetails(
-    'mailto:admin@koralegend.com',
+    'https://koralegend.com',
     vapidKeys.publicKey,
     vapidKeys.privateKey
 );
@@ -237,17 +237,20 @@ function formatTime(startDate) {
 
 function mapStatus(m) {
     const s = m.status;
-    if (s === 'FIXTURE')   return { en: 'Upcoming',  ar: 'قادمة',    isLive: false, isFinished: false };
-    if (s === 'RESULT')    return { en: 'Finished',  ar: 'انتهت',    isLive: false, isFinished: true  };
-    if (s === 'POSTPONED') return { en: 'Postponed', ar: 'مؤجلة',   isLive: false, isFinished: false };
-    if (s === 'CANCELLED') return { en: 'Cancelled', ar: 'ملغاة',   isLive: false, isFinished: false };
+    if (s === 'FIXTURE')   return { en: 'Upcoming',  ar: 'قادمة',    isLive: false, isFinished: false, isHalfTime: false, isExtraTime: false };
+    if (s === 'RESULT')    return { en: 'Finished',  ar: 'انتهت',    isLive: false, isFinished: true,  isHalfTime: false, isExtraTime: false };
+    if (s === 'POSTPONED') return { en: 'Postponed', ar: 'مؤجلة',   isLive: false, isFinished: false, isHalfTime: false, isExtraTime: false };
+    if (s === 'CANCELLED') return { en: 'Cancelled', ar: 'ملغاة',   isLive: false, isFinished: false, isHalfTime: false, isExtraTime: false };
     if (s === 'LIVE' || s === 'IN_PROGRESS') {
         const min  = m.period?.minute;
         const type = m.period?.type;
-        if (type === 'HALF_TIME') return { en: 'HT', ar: 'استراحة', isLive: true, isFinished: false };
-        return { en: min ? `${min}'` : 'Live', ar: min ? `${min}'` : 'مباشر', isLive: true, isFinished: false };
+        if (type === 'HALF_TIME')  return { en: 'HT',  ar: 'استراحة',      isLive: true, isFinished: false, isHalfTime: true,  isExtraTime: false };
+        if (type === 'EXTRA_TIME') return { en: 'ET',  ar: 'وقت إضافي',    isLive: true, isFinished: false, isHalfTime: false, isExtraTime: true  };
+        if (type === 'PENALTY')    return { en: 'PEN', ar: 'ركلات الترجيح', isLive: true, isFinished: false, isHalfTime: false, isExtraTime: true  };
+        if (min && min > 90)       return { en: `${min}'`, ar: `${min}'`,    isLive: true, isFinished: false, isHalfTime: false, isExtraTime: true  };
+        return { en: min ? `${min}'` : 'Live', ar: min ? `${min}'` : 'مباشر', isLive: true, isFinished: false, isHalfTime: false, isExtraTime: false };
     }
-    return { en: s || 'Unknown', ar: s || 'غير معروف', isLive: false, isFinished: false };
+    return { en: s || 'Unknown', ar: s || 'غير معروف', isLive: false, isFinished: false, isHalfTime: false, isExtraTime: false };
 }
 
 // ── ysscores: fetch date-based matches ─────────────────────
@@ -316,18 +319,26 @@ function mapEspnStatus(event) {
     const state = type?.state; // 'pre', 'in', 'post'
     const completed = type?.completed;
     const desc = type?.shortDetail || type?.description || '';
+    const descLower = desc.toLowerCase();
 
     if (state === 'in') {
         const clock = event.status?.displayClock || '';
         const period = event.status?.period || 1;
+        // Half time
+        if (descLower.includes('half time') || descLower.includes('halftime') || descLower.includes('ht') || descLower === 'end of 1st half') {
+            return { ar: 'استراحة', isLive: true, isFinished: false, isHalfTime: true, isExtraTime: false };
+        }
         // Extra time / penalties
-        if (period > 2) return { ar: clock || 'و.إ', isLive: true, isFinished: false };
-        return { ar: clock ? `${clock}'` : 'مباشر', isLive: true, isFinished: false };
+        if (period > 2 || descLower.includes('extra time') || descLower.includes('overtime') || descLower.includes('et') || descLower.includes('penalty')) {
+            const label = descLower.includes('penalty') ? 'ركلات الترجيح' : (clock || 'و.إ');
+            return { ar: label, isLive: true, isFinished: false, isHalfTime: false, isExtraTime: true };
+        }
+        return { ar: clock ? `${clock}'` : 'مباشر', isLive: true, isFinished: false, isHalfTime: false, isExtraTime: false };
     }
-    if (state === 'post' || completed) return { ar: 'انتهت', isLive: false, isFinished: true };
-    if (desc.toLowerCase().includes('postponed')) return { ar: 'مؤجلة', isLive: false, isFinished: false };
-    if (desc.toLowerCase().includes('cancel'))    return { ar: 'ملغاة',  isLive: false, isFinished: false };
-    return { ar: 'قادمة', isLive: false, isFinished: false };
+    if (state === 'post' || completed) return { ar: 'انتهت', isLive: false, isFinished: true, isHalfTime: false, isExtraTime: false };
+    if (descLower.includes('postponed')) return { ar: 'مؤجلة', isLive: false, isFinished: false, isHalfTime: false, isExtraTime: false };
+    if (descLower.includes('cancel'))    return { ar: 'ملغاة',  isLive: false, isFinished: false, isHalfTime: false, isExtraTime: false };
+    return { ar: 'قادمة', isLive: false, isFinished: false, isHalfTime: false, isExtraTime: false };
 }
 
 async function fetchStandingsESPN(leagueName) {
@@ -424,6 +435,8 @@ async function fetchMatchesESPN(dateStr) {
                     statusAr:    status.ar,
                     isLive:      status.isLive,
                     isFinished:  status.isFinished,
+                    isHalfTime:  status.isHalfTime || false,
+                    isExtraTime: status.isExtraTime || false,
                     date:        dateStr,
                     startTime:   event.date || '',
                     slug:        '',
@@ -466,6 +479,8 @@ function parseCompetitions(competitions, dateLabel) {
                 statusAr:    status.ar,
                 isLive:      status.isLive,
                 isFinished:  status.isFinished,
+                isHalfTime:  status.isHalfTime || false,
+                isExtraTime: status.isExtraTime || false,
                 date:        dateLabel,
                 startTime:   m.startDate || '',
                 slug:        m.link?.slug || '',

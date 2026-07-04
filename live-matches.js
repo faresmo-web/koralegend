@@ -325,6 +325,8 @@ function matchRowHtml(match) {
         const hs = match.homeScore !== null && match.homeScore !== undefined ? match.homeScore : '0';
         const as = match.awayScore !== null && match.awayScore !== undefined ? match.awayScore : '0';
         const statusText = match.statusAr || match.status || 'مباشر';
+        const isHT = match.isHalfTime || statusText === 'استراحة';
+        const isET = match.isExtraTime || statusText === 'وقت إضافي' || statusText === 'ركلات الترجيح' || statusText === 'و.إ';
 
         centerHtml  = `<div class="match-time-badge" style="font-family: 'Cairo', sans-serif; font-weight: 700; font-size: 0.85rem;">${match.time || ''}</div>
                        <div class="match-score-badge live">
@@ -332,7 +334,15 @@ function matchRowHtml(match) {
                            <span class="score-divider">-</span>
                            <span class="score-num">${as}</span>
                        </div>`;
-        statusBadge = `<span class="match-status-badge status-live">${statusText}</span>`;
+
+        if (isHT) {
+            statusBadge = `<span class="match-status-badge" style="background:rgba(255,140,0,0.18);border:1px solid rgba(255,140,0,0.6);color:#ff8c00;font-weight:800;">⏸ ${statusText}</span>`;
+        } else if (isET) {
+            statusBadge = `<span class="match-status-badge" style="background:rgba(147,51,234,0.18);border:1px solid rgba(147,51,234,0.6);color:#a855f7;font-weight:800;">⚡ ${statusText}</span>`;
+        } else {
+            statusBadge = `<span class="match-status-badge status-live">${statusText}</span>`;
+        }
+
     } else {
         const hs = match.homeScore !== null && match.homeScore !== undefined ? match.homeScore : '0';
         const as = match.awayScore !== null && match.awayScore !== undefined ? match.awayScore : '0';
