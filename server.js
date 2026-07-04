@@ -175,19 +175,31 @@ function saveSubscriptions(subs) {
 async function sendPushToAll(payload) {
     const subs = loadSubscriptions();
     const dead = [];
+    console.log(`[Push] Attempting to send to ${subs.length} subscriber(s)...`);
     await Promise.allSettled(
         subs.map(async sub => {
             try {
+                console.log(`[Push] Sending to: ${sub.endpoint.substring(0, 50)}...`);
                 await webPush.sendNotification(sub, JSON.stringify(payload));
+                console.log(`[Push] ✓ Sent successfully`);
             } catch (e) {
-                if (e.statusCode === 410 || e.statusCode === 404) dead.push(sub.endpoint);
-                else console.warn('[Push] Send error:', e.message);
+                console.error(`[Push] ✗ Error sending:`, {
+                    statusCode: e.statusCode,
+                    message: e.message,
+                    code: e.code,
+                    body: e.body
+                });
+                if (e.statusCode === 410 || e.statusCode === 404) {
+                    dead.push(sub.endpoint);
+                    console.log(`[Push] Marked as dead (${e.statusCode})`);
+                }
             }
         })
     );
     if (dead.length) {
         const cleaned = subs.filter(s => !dead.includes(s.endpoint));
         saveSubscriptions(cleaned);
+        console.log(`[Push] Cleaned ${dead.length} dead subscription(s)`);
     }
 }
 
@@ -1254,7 +1266,7 @@ const pushState = {
     initialized: false,
 };
 
-const SITE_ORIGIN = `http://localhost:${typeof PORT === 'number' ? PORT : 3000}`;
+const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://www.koralegend.com';
 
 async function pushDaemonTick() {
     try {
@@ -1377,6 +1389,19 @@ const server = http.createServer((req, res) => {
     if (url === '/api/vapid-public-key')  return handleVapidPublicKey(req, res);
     if (url === '/api/subscribe')         return handleSubscribe(req, res);
     if (url === '/api/unsubscribe')       return handleUnsubscribe(req, res);
+    if (url === '/api/test-push') {
+        const subs = loadSubscriptions();
+        sendJSON(res, { ok: true, subscribers: subs.length });
+        if (subs.length > 0) {
+            sendPushToAll({
+                title: '🔔 اختبار الإشعارات',
+                body: 'تم إرسال هذا الإشعار لاختبار عمل النظام',
+                icon: '/logo.png',
+                data: { url: '/matches' }
+            }).catch(e => console.error('[Test Push] Error:', e.message));
+        }
+        return;
+    }
     // ── Streams API ──
     if (url === '/api/streams')           return handleGetStream(req, res);
     if (url === '/api/streams/heartbeat') return handleStreamHeartbeat(req, res);

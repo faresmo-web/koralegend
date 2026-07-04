@@ -641,41 +641,58 @@ function setNotifBtnState(subscribed) {
 
 // ── Subscribe logic ───────────────────────────────────────────
 async function subscribeToPush() {
+    console.log('[Push] Starting subscription flow...');
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        console.warn('[Push] Browser does not support service workers or push');
         showPushToast('متصفحك لا يدعم الإشعارات.', true);
         return;
     }
 
     const permission = await Notification.requestPermission();
+    console.log('[Push] Notification permission:', permission);
     if (permission !== 'granted') {
         showPushToast('تم رفض إذن الإشعارات. يرجى السماح من إعدادات المتصفح.', true);
         return;
     }
 
     try {
+        console.log('[Push] Getting service worker...');
         const reg = await navigator.serviceWorker.ready;
+        console.log('[Push] Service worker ready:', reg);
 
         // Fetch VAPID public key from server
-        const keyRes  = await fetch(getPushUrl('/api/vapid-public-key'));
-        if (!keyRes.ok) throw new Error('VAPID key fetch failed');
+        const vapidUrl = getPushUrl('/api/vapid-public-key');
+        console.log('[Push] Fetching VAPID from:', vapidUrl);
+        const keyRes  = await fetch(vapidUrl);
+        if (!keyRes.ok) throw new Error(`VAPID key fetch failed: ${keyRes.status}`);
         const { publicKey } = await keyRes.json();
+        console.log('[Push] Got VAPID public key:', publicKey);
 
+        console.log('[Push] Subscribing to push with public key...');
         const subscription = await reg.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: urlBase64ToUint8Array(publicKey),
         });
+        console.log('[Push] Subscription successful:', subscription);
 
         // Send subscription to server
-        const res = await fetch(getPushUrl('/api/subscribe'), {
+        const subscribeUrl = getPushUrl('/api/subscribe');
+        console.log('[Push] Sending subscription to:', subscribeUrl);
+        const res = await fetch(subscribeUrl, {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify(subscription),
         });
 
-        if (!res.ok) throw new Error('Server subscription save failed');
+        console.log('[Push] Server response status:', res.status);
+        if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(`Server subscription save failed: ${res.status} - ${errText}`);
+        }
 
         localStorage.setItem('pushSubscribed', '1');
         setNotifBtnState(true);
+        console.log('[Push] Subscription stored and UI updated');
         showPushToast('🔔 تم الاشتراك! ستصلك إشعارات الأهداف والأخبار فوراً.');
     } catch (e) {
         console.error('[Push] Subscribe error:', e);
@@ -770,7 +787,12 @@ function injectNotifButton() {
 
 // ── Boot: register service worker and restore state ───────────
 (async function initPush() {
-    if (!('serviceWorker' in navigator)) return;
+    if (!('serviceWorker' in navigator)) {
+        console.log('[Push] Service workers not supported');
+        return;
+    }
+
+    console.log('[Push] Initializing push notifications...');
 
     // Listen for messages from service worker (to play sounds)
     navigator.serviceWorker.addEventListener('message', event => {
@@ -781,12 +803,18 @@ function injectNotifButton() {
     });
 
     try {
-        await navigator.serviceWorker.register(getPushUrl(PUSH_SW_PATH), { scope: '/' });
-        const reg = await navigator.serviceWorker.ready;
+        const swPath = getPushUrl(PUSH_SW_PATH);
+        console.log('[Push] Registering service worker from:', swPath);
+        const reg = await navigator.serviceWorker.register(swPath, { scope: '/' });
+        console.log('[Push] Service worker registered:', reg);
+        
+        const reg2 = await navigator.serviceWorker.ready;
+        console.log('[Push] Service worker ready');
 
         // Restore button state from existing browser subscription
-        const sub = await reg.pushManager.getSubscription();
+        const sub = await reg2.pushManager.getSubscription();
         const wasSubscribed = !!sub;
+        console.log('[Push] Existing subscription found:', !!sub);
 
         // Inject button after DOM is ready
         if (document.readyState === 'loading') {
@@ -799,6 +827,6 @@ function injectNotifButton() {
             setNotifBtnState(wasSubscribed);
         }
     } catch (e) {
-        console.warn('[Push] Service worker registration failed:', e.message);
+        console.error('[Push] Service worker registration failed:', e.message, e);
     }
 })();

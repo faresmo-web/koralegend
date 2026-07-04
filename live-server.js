@@ -14,8 +14,9 @@ const axios   = require('axios');
 const webPush = require('web-push');
 const ysscores = require('./ysscores');
 
-const PORT     = 3000;
+const PORT     = process.env.PORT || 3000;
 const TIMEZONE = 'Africa/Cairo';
+const SITE_ORIGIN = process.env.SITE_ORIGIN || 'https://www.koralegend.com';
 
 // ── VAPID / Push Setup ───────────────────────────────────────
 const VAPID_FILE = path.join(__dirname, 'vapid-keys.json');
@@ -32,7 +33,7 @@ try {
 }
 
 webPush.setVapidDetails(
-    'mailto:admin@koralegend.com',
+    'https://www.koralegend.com',
     vapidKeys.publicKey,
     vapidKeys.privateKey
 );
