@@ -153,7 +153,7 @@ try {
 }
 
 webPush.setVapidDetails(
-    'https://koralegend.com',
+    'https://www.koralegend.com',
     vapidKeys.publicKey,
     vapidKeys.privateKey
 );
@@ -1162,6 +1162,10 @@ function serveStatic(req, res) {
 
         const mime = MIME[ext] || 'application/octet-stream';
         const headers = { 'Content-Type': mime };
+
+        if (fileToServe.endsWith(path.sep + 'service-worker.js') || urlPath === '/service-worker.js') {
+            headers['Service-Worker-Allowed'] = '/';
+        }
 
         // Cache configuration: do not hard-cache CSS/JS during updates, cache images for 1 day
         if (ext === '.css' || ext === '.js') {

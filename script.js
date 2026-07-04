@@ -114,9 +114,12 @@ function initThemeToggle() {
     const savedTheme = localStorage.getItem('theme') || 'light';
     themeBtn.innerHTML = savedTheme === 'light' ? '🌙' : '☀️';
     
-    // Insert before menuToggle if available, else append
+    // Prefer placing the toggle next to the site logo for prominence
     const menuToggle = document.getElementById('menuToggle');
-    if (menuToggle) {
+    const logoEl = headerContent.querySelector('.logo');
+    if (logoEl && logoEl.parentNode === headerContent) {
+        headerContent.insertBefore(themeBtn, logoEl.nextSibling);
+    } else if (menuToggle) {
         headerContent.insertBefore(themeBtn, menuToggle);
     } else {
         headerContent.appendChild(themeBtn);
@@ -575,6 +578,11 @@ function formatTime(time) {
 
 const PUSH_BTN_ID  = 'koraNotifBtn';
 const PUSH_SW_PATH = '/service-worker.js';
+const PUSH_ORIGIN  = window.location.origin || 'https://www.koralegend.com';
+
+function getPushUrl(path) {
+    return new URL(path, PUSH_ORIGIN).toString();
+}
 
 // ── Helper: show a toast message ─────────────────────────────
 function showPushToast(msg, isError = false) {
@@ -648,7 +656,7 @@ async function subscribeToPush() {
         const reg = await navigator.serviceWorker.ready;
 
         // Fetch VAPID public key from server
-        const keyRes  = await fetch('/api/vapid-public-key');
+        const keyRes  = await fetch(getPushUrl('/api/vapid-public-key'));
         if (!keyRes.ok) throw new Error('VAPID key fetch failed');
         const { publicKey } = await keyRes.json();
 
@@ -658,7 +666,7 @@ async function subscribeToPush() {
         });
 
         // Send subscription to server
-        const res = await fetch('/api/subscribe', {
+        const res = await fetch(getPushUrl('/api/subscribe'), {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify(subscription),
@@ -681,7 +689,7 @@ async function unsubscribeFromPush() {
         const reg  = await navigator.serviceWorker.ready;
         const sub  = await reg.pushManager.getSubscription();
         if (sub) {
-            await fetch('/api/unsubscribe', {
+            await fetch(getPushUrl('/api/unsubscribe'), {
                 method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body:    JSON.stringify({ endpoint: sub.endpoint }),
@@ -748,8 +756,11 @@ function injectNotifButton() {
         mobileBtn.innerHTML = `${bellSVG}<span class="notif-dot-mobile"></span>`;
         mobileBtn.addEventListener('click', handleNotifClick);
 
-        // Insert before menu-toggle so it appears between logo and hamburger
-        if (menuToggle) {
+        // Insert after menu-toggle so the hamburger remains visible on small screens
+        if (menuToggle && menuToggle.parentNode === headerContent) {
+            const after = menuToggle.nextSibling;
+            headerContent.insertBefore(mobileBtn, after);
+        } else if (menuToggle) {
             headerContent.insertBefore(mobileBtn, menuToggle);
         } else {
             headerContent.appendChild(mobileBtn);
@@ -770,7 +781,7 @@ function injectNotifButton() {
     });
 
     try {
-        await navigator.serviceWorker.register(PUSH_SW_PATH, { scope: '/' });
+        await navigator.serviceWorker.register(getPushUrl(PUSH_SW_PATH), { scope: '/' });
         const reg = await navigator.serviceWorker.ready;
 
         // Restore button state from existing browser subscription
@@ -790,4 +801,4 @@ function injectNotifButton() {
     } catch (e) {
         console.warn('[Push] Service worker registration failed:', e.message);
     }
-})();
+})();
