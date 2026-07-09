@@ -3,8 +3,9 @@ const cheerio = require('cheerio');
 
 const BASE_URL = 'https://www.ysscores.com/ar';
 
-let sessionToken = '';
-let sessionCookie = '';
+let sessionToken = '';     // CSRF token from <meta name="_token">
+let xsrfToken = '';        // XSRF-TOKEN cookie value (URL-decoded) for X-XSRF-TOKEN header
+let sessionCookie = '';    // Raw cookie string to forward
 let lastSessionTime = 0;
 let timezoneSet = false;
 
@@ -13,18 +14,36 @@ async function ensureSession() {
     if (sessionToken && (Date.now() - lastSessionTime < 3600000)) return true;
     try {
         const r = await axios.get(`${BASE_URL}/index`, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language': 'ar,en-US;q=0.7,en;q=0.3',
+            },
             timeout: 10000,
             responseType: 'arraybuffer'
         });
         const html = Buffer.from(r.data).toString('utf-8');
         const $ = cheerio.load(html);
         sessionToken = $('meta[name="_token"]').attr('content') || '';
-        const cookies = r.headers['set-cookie'];
-        sessionCookie = cookies ? cookies.map(c => c.split(';')[0]).join('; ') : '';
+
+        // Parse all cookies — we need both the session cookie AND the XSRF-TOKEN
+        const cookies = r.headers['set-cookie'] || [];
+        sessionCookie = cookies.map(c => c.split(';')[0]).join('; ');
+
+        // Laravel sends XSRF-TOKEN as a URL-encoded cookie value
+        // We must URL-decode it and send it back as the X-XSRF-TOKEN header
+        xsrfToken = '';
+        for (const c of cookies) {
+            const pair = c.split(';')[0];
+            if (pair.startsWith('XSRF-TOKEN=')) {
+                xsrfToken = decodeURIComponent(pair.slice('XSRF-TOKEN='.length));
+                break;
+            }
+        }
+
         lastSessionTime = Date.now();
         timezoneSet = false; // reset so we re-set timezone on new session
-        console.log(`[ysscores] Session ready. Token: ${sessionToken ? 'OK' : 'MISSING'}`);
+        console.log(`[ysscores] Session ready. Token: ${sessionToken ? 'OK' : 'MISSING'}, XSRF: ${xsrfToken ? 'OK' : 'MISSING'}`);
 
         // Set timezone to KSA/Cairo (UTC+3) so match times are displayed correctly
         await setTimezoneKSA();
@@ -39,54 +58,95 @@ async function ensureSession() {
 async function setTimezoneKSA() {
     if (timezoneSet || !sessionToken) return;
     try {
-        // ysscores uses /change_timezone/ksa to set KSA/Cairo (UTC+3) timezone
-        const tzUrl = `${BASE_URL.replace('/ar', '')}/change_timezone/ksa`;
-        await axios.get(tzUrl, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                'Cookie': sessionCookie,
-                'Referer': `${BASE_URL}/index`,
-                'Accept': 'application/json, text/javascript, */*',
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-            timeout: 8000,
-        });
-        timezoneSet = true;
-        console.log('[ysscores] Timezone set to KSA/Cairo (UTC+3)');
+        // Try multiple known timezone endpoints for ysscores
+        const tzUrls = [
+            `${BASE_URL}/change_zone/3`,         // UTC+3 (most likely pattern)
+            `${BASE_URL.replace('/ar', '')}/change_zone/3`,
+            `${BASE_URL}/change_timezone/ksa`,
+            `${BASE_URL.replace('/ar', '')}/change_timezone/ksa`,
+        ];
+
+        for (const tzUrl of tzUrls) {
+            try {
+                const tzHeaders = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+                    'Cookie': sessionCookie,
+                    'Referer': `${BASE_URL}/index`,
+                    'Accept': 'application/json, text/javascript, */*; q=0.01',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-Token': sessionToken,
+                };
+                if (xsrfToken) tzHeaders['X-XSRF-TOKEN'] = xsrfToken;
+
+                await axios.get(tzUrl, { headers: tzHeaders, timeout: 6000 });
+                timezoneSet = true;
+                console.log(`[ysscores] Timezone set via: ${tzUrl}`);
+                return;
+            } catch (innerE) {
+                // try next URL
+            }
+        }
+        console.warn('[ysscores] All timezone URLs failed — proceeding without TZ set');
     } catch (e) {
         console.warn('[ysscores] Could not set timezone:', e.message);
     }
 }
 
-async function fetchMatchesForDate(dateStr, dateLabel) {
-    await ensureSession();
-    if (!sessionToken) throw new Error('No ysscores session token available');
-
+async function doMatchPost(dateStr) {
     const formData = new URLSearchParams();
     formData.append('get_date', dateStr);
     formData.append('favorite_status', 'champ_display');
     formData.append('match_status', '1');
     formData.append('order_status', '1');
     formData.append('clear_c', 'yes');
+    // Laravel checks _token in the POST body FIRST — most reliable CSRF method
+    if (sessionToken) formData.append('_token', sessionToken);
 
-    const r = await axios.post(`${BASE_URL}/match_date_to`, formData.toString(), {
-        headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'X-CSRF-Token': sessionToken,
-            'Cookie': sessionCookie,
-            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'X-Requested-With': 'XMLHttpRequest',
-            'Referer': `${BASE_URL}/index`,
-            'Accept': 'text/html, */*; q=0.01',
-            'Accept-Language': 'ar,en;q=0.9',
-            'Accept-Encoding': 'identity',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-        },
+    const headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+        'X-CSRF-Token': sessionToken,
+        'Cookie': sessionCookie,
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Referer': `${BASE_URL}/index`,
+        'Origin': 'https://www.ysscores.com',
+        'Accept': 'text/html, */*; q=0.01',
+        'Accept-Language': 'ar,en-US;q=0.7,en;q=0.3',
+        'Accept-Encoding': 'identity',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+    };
+    // Send XSRF-TOKEN as X-XSRF-TOKEN — Laravel verifies this header against the cookie
+    if (xsrfToken) headers['X-XSRF-TOKEN'] = xsrfToken;
+
+    return axios.post(`${BASE_URL}/match_date_to`, formData.toString(), {
+        headers,
         timeout: 15000,
         responseType: 'arraybuffer'
     });
+}
+
+async function fetchMatchesForDate(dateStr, dateLabel) {
+    await ensureSession();
+    if (!sessionToken) throw new Error('No ysscores session token available');
+
+    let r;
+    try {
+        r = await doMatchPost(dateStr);
+    } catch (e) {
+        // On 419 CSRF mismatch, force a fresh session and retry once
+        if (e.response && e.response.status === 419) {
+            console.warn('[ysscores] 419 on first attempt — refreshing session and retrying...');
+            sessionToken = '';
+            xsrfToken = '';
+            sessionCookie = '';
+            lastSessionTime = 0;
+            await ensureSession();
+            r = await doMatchPost(dateStr);  // throws again if still 419
+        } else {
+            throw e;
+        }
+    }
 
     const html = Buffer.from(r.data).toString('utf-8');
     const $ = cheerio.load(html);
