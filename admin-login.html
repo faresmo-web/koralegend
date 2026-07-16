@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول — لوحة التحكم</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:           #06091a;
+            --surface:      #0d1432;
+            --surface2:     #131b3e;
+            --border:       rgba(255,255,255,0.08);
+            --primary:      #1b75f0;
+            --primary-glow: rgba(27,117,240,0.35);
+            --danger:       #ef4444;
+            --text:         #e8eaf6;
+            --text-dim:     #8892b0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        body::before {
+            content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+            background:
+                radial-gradient(ellipse 80% 50% at 20% 20%, rgba(27,117,240,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 40% at 80% 80%, rgba(255,81,0,0.06) 0%, transparent 60%);
+        }
+
+        .login-card {
+            background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+            border: 1px solid var(--border); border-radius: 24px; padding: 3rem 2.5rem;
+            width: 100%; max-width: 420px; text-align: center; position: relative; overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(27,117,240,0.1);
+            z-index: 1;
+        }
+        .login-card::before {
+            content: ''; position: absolute; top: -60px; left: -60px; width: 180px; height: 180px;
+            background: radial-gradient(circle, rgba(27,117,240,0.15), transparent 70%); border-radius: 50%;
+        }
+        .login-logo { font-size: 3rem; margin-bottom: 0.5rem; }
+        .login-title { font-size: 1.5rem; font-weight: 900; background: linear-gradient(135deg, #fff 0%, var(--primary) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.5rem; }
+        .login-subtitle { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 2rem; }
+        .input-group { margin-bottom: 1.25rem; display: flex; flex-direction: column; gap: 0.85rem; }
+        .input-group input { width: 100%; padding: 0.9rem 1.25rem; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-family: 'Cairo', sans-serif; font-size: 1rem; outline: none; transition: border-color 0.3s, box-shadow 0.3s; text-align: center; }
+        .input-group input[type="password"] { letter-spacing: 3px; }
+        .input-group input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+        .btn-login { width: 100%; padding: 1rem; background: linear-gradient(135deg, var(--primary) 0%, #0d5cd4 100%); border: none; border-radius: 12px; color: #fff; font-family: 'Cairo', sans-serif; font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 20px var(--primary-glow); }
+        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 30px var(--primary-glow); }
+        .login-error { color: var(--danger); font-size: 0.85rem; margin-top: 0.75rem; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="login-card">
+    <div class="login-logo">⚽</div>
+    <h1 class="login-title">لوحة التحكم</h1>
+    <p class="login-subtitle">كورة ليجند — Admin Panel</p>
+    <div class="input-group">
+        <input type="text" id="usernameInput" placeholder="اسم المستخدم" autocomplete="username">
+        <input type="password" id="passwordInput" placeholder="كلمة السر" autocomplete="current-password">
+    </div>
+    <button class="btn-login" onclick="doLogin()">دخول</button>
+    <p class="login-error" id="loginError">❌ اسم المستخدم أو كلمة السر غير صحيحة!</p>
+</div>
+
+<script>
+    document.getElementById('passwordInput').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    document.getElementById('usernameInput').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+    async function doLogin() {
+        const user = document.getElementById('usernameInput').value.trim();
+        const pwd = document.getElementById('passwordInput').value.trim();
+        if (!user || !pwd) return;
+        
+        const btn = document.querySelector('.btn-login');
+        btn.disabled = true;
+        btn.innerText = 'جاري التحقق...';
+
+        try {
+            const res = await fetch('/api/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: user, password: pwd })
+            });
+            const data = await res.json();
+            if (res.ok && data.ok) {
+                // Redirect to admin panel
+                window.location.reload();
+            } else {
+                showLoginError(data.error || 'اسم المستخدم أو كلمة السر غير صحيحة!');
+            }
+        } catch {
+            showLoginError('حدث خطأ في الاتصال بالسيرفر!');
+        } finally {
+            btn.disabled = false;
+            btn.innerText = 'دخول';
+        }
+    }
+
+    function showLoginError(msg) {
+        const err = document.getElementById('loginError');
+        err.innerText = '❌ ' + msg;
+        err.style.display = 'block';
+        setTimeout(() => err.style.display = 'none', 4000);
+    }
+</script>
+
+</body>
+</html>

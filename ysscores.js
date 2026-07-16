@@ -86,10 +86,47 @@ async function setTimezoneKSA() {
                 // try next URL
             }
         }
-        console.warn('[ysscores] All timezone URLs failed — proceeding without TZ set');
+        console.warn('[ysscores] All timezone URLs failed — will apply +3h offset manually to match times');
     } catch (e) {
         console.warn('[ysscores] Could not set timezone:', e.message);
     }
+}
+
+/**
+ * If the ysscores session timezone could not be set to Cairo (UTC+3),
+ * the site returns match times in UTC. This function detects that and
+ * adds 3 hours to the Arabic time string so it displays correctly.
+ *
+ * Arabic time format from ysscores: "HH:MM ص" (AM) or "HH:MM م" (PM)
+ * We convert to 24h, add 3 hours, then convert back to Arabic 12h.
+ */
+function adjustTimeIfUTC(timeStr) {
+    if (timezoneSet || !timeStr) return timeStr; // timezone was set correctly, no adjustment needed
+
+    // Match Arabic time: "10:30 م" or "09:00 ص"
+    const m = timeStr.trim().match(/^(\d{1,2}):(\d{2})\s*([صم])$/);
+    if (!m) return timeStr; // not a recognizable time string, leave as-is
+
+    let hours   = parseInt(m[1]);
+    const mins  = parseInt(m[2]);
+    const ampm  = m[3];
+
+    // Convert Arabic 12h to 24h
+    if (ampm === 'ص') { // AM
+        if (hours === 12) hours = 0;
+    } else {              // PMم
+        if (hours !== 12) hours += 12;
+    }
+
+    // Add 3 hours for Cairo offset
+    hours = (hours + 3) % 24;
+
+    // Convert back to Arabic 12h
+    const newAmpm = hours < 12 ? 'ص' : 'م';
+    let displayH = hours % 12;
+    if (displayH === 0) displayH = 12;
+
+    return `${String(displayH).padStart(2, '0')}:${String(mins).padStart(2, '0')} ${newAmpm}`;
 }
 
 async function doMatchPost(dateStr) {
@@ -181,6 +218,9 @@ async function fetchMatchesForDate(dateStr, dateLabel) {
             if (time.includes('-') && time.match(/\d+/)) {
                 time = '';
             }
+
+            // If ysscores timezone was not set to Cairo, correct the time by adding +3h
+            time = adjustTimeIfUTC(time);
 
             // homeScore / awayScore
             let homeScore = null;

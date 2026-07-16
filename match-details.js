@@ -224,12 +224,53 @@ function extractTweetId(url) {
     return match ? match[1] : null;
 }
 
+function isM3u8Url(url) {
+    if (!url) return false;
+    return url.split('?')[0].endsWith('.m3u8') || url.includes('.m3u8?');
+}
+
+function setupHlsPlayer(video, targetUrl) {
+    const playHls = () => {
+        if (window.Hls && window.Hls.isSupported()) {
+            const hls = new window.Hls({
+                maxMaxBufferLength: 10,
+                enableWorker: true,
+                lowLatencyMode: true
+            });
+            hls.loadSource(targetUrl);
+            hls.attachMedia(video);
+            hls.on(window.Hls.Events.MANIFEST_PARSED, function() {
+                video.play().catch(() => {});
+            });
+            video.hlsInstance = hls;
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            // Native HLS support (Safari / iOS)
+            video.src = targetUrl;
+            video.addEventListener('loadedmetadata', function() {
+                video.play().catch(() => {});
+            });
+        }
+    };
+
+    if (window.Hls) {
+        playHls();
+    } else {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/hls.js@latest';
+        script.async = true;
+        script.onload = playHls;
+        document.body.appendChild(script);
+    }
+}
+
 // Renders the MAIN broadcast in mainStreamContainer
 function renderMainStream(container, mainStream) {
     const targetUrl = mainStream.iframeUrl || mainStream.externalUrl || '';
 
     let bodyHtml = '';
     if (!targetUrl) return;
+
+    const isM3u8 = isM3u8Url(targetUrl);
 
     if (isTwitterUrl(targetUrl)) {
         const tweetId = extractTweetId(targetUrl);
@@ -251,6 +292,16 @@ function renderMainStream(container, mainStream) {
         } else {
             bodyHtml = `<div class="stream-notice"><div class="notice-icon">🐦</div><p style="font-size:1rem;font-weight:700;color:var(--text-primary)">البث موجود على X</p><a href="${targetUrl}" target="_blank" rel="noopener" class="btn-stream-ext" style="margin-top:1rem;display:inline-flex">🌐 افتحه في نافذة جديدة</a></div>`;
         }
+    } else if (isM3u8) {
+        bodyHtml = `
+        <div class="stream-video-wrap" style="width: 100%; background: #000; border-radius: 12px; overflow: hidden; position: relative;">
+            <video id="mainStreamVideo" controls autoplay playsinline style="width:100%; display:block; aspect-ratio: 16/9; max-height: 480px;"></video>
+        </div>`;
+        setTimeout(() => {
+            const video = document.getElementById('mainStreamVideo');
+            if (!video) return;
+            setupHlsPlayer(video, targetUrl);
+        }, 50);
     } else if (mainStream.iframeUrl) {
         const finalUrl = fixTwitchUrl(mainStream.iframeUrl);
         bodyHtml = `
@@ -269,8 +320,8 @@ function renderMainStream(container, mainStream) {
         </div>`;
     }
 
-    const fullscreenBtn = mainStream.iframeUrl && !isTwitterUrl(mainStream.iframeUrl)
-        ? `<button class="btn-fullscreen" onclick="document.getElementById('mainStreamIframe')?.requestFullscreen()">□ ملء الشاشة</button>` : '';
+    const fullscreenBtn = (mainStream.iframeUrl || isM3u8) && !isTwitterUrl(targetUrl)
+        ? `<button class="btn-fullscreen" onclick="document.getElementById('${isM3u8 ? 'mainStreamVideo' : 'mainStreamIframe'}')?.requestFullscreen()">□ ملء الشاشة</button>` : '';
     const extBtn = mainStream.externalUrl
         ? `<a class="btn-stream-ext" href="${mainStream.externalUrl}" target="_blank" rel="noopener">🌐 نافذة جديدة</a>` : '';
 
@@ -304,6 +355,8 @@ function renderClipInDrawer(zone) {
     const targetUrl = zone.iframeUrl || zone.externalUrl || '';
     let bodyHtml = '';
 
+    const isM3u8 = isM3u8Url(targetUrl);
+
     if (isTwitterUrl(targetUrl)) {
         const tweetId = extractTweetId(targetUrl);
         if (tweetId) {
@@ -326,6 +379,16 @@ function renderClipInDrawer(zone) {
         } else {
             bodyHtml = `<div class="stream-notice" style="padding:2rem 1rem;"><div class="notice-icon">🐦</div><p style="font-weight:700;color:var(--text-primary)">اللقطة على X (تويتر)</p><a href="${targetUrl}" target="_blank" rel="noopener" class="btn-stream-ext" style="margin-top:1rem;display:inline-flex">🌐 افتحها في نافذة جديدة</a></div>`;
         }
+    } else if (isM3u8) {
+        bodyHtml = `
+        <div class="stream-video-wrap" style="width: 100%; background: #000; border-radius: 12px; overflow: hidden; position: relative;">
+            <video id="clipDrawerVideo" controls autoplay playsinline style="width:100%; display:block; aspect-ratio: 16/9; max-height: 480px;"></video>
+        </div>`;
+        setTimeout(() => {
+            const video = document.getElementById('clipDrawerVideo');
+            if (!video) return;
+            setupHlsPlayer(video, targetUrl);
+        }, 50);
     } else if (zone.iframeUrl) {
         const finalUrl = fixTwitchUrl(zone.iframeUrl);
         bodyHtml = `
@@ -350,6 +413,13 @@ function closeClipsDrawer() {
     // Stop any playing iframe
     const iframe = document.getElementById('clipDrawerIframe');
     if (iframe) iframe.src = 'about:blank';
+    // Stop any playing video
+    const video = document.getElementById('clipDrawerVideo');
+    if (video) {
+        video.pause();
+        video.src = '';
+        video.load();
+    }
     drawer.style.display = 'none';
     document.getElementById('clipsDrawerBody').innerHTML = '';
 }
