@@ -347,21 +347,22 @@ function renderMatchCards() {
 }
 
 // State management for match streams (main broadcast + highlight zones)
-const mainStreamState = {}; // matchId → { iframeUrl, externalUrl }
+const mainStreamState = {}; // matchId → { iframeUrl, externalUrl, hlsUrl }
 const zonesState      = {}; // matchId → [{label, iframeUrl, externalUrl}]
 
 function initMatchDataState(matchId) {
     if (!mainStreamState[matchId]) {
         const saved = allStreams[matchId];
         if (saved) {
-            mainStreamState[matchId] = saved.mainStream || { iframeUrl: saved.iframeUrl || '', externalUrl: saved.externalUrl || '' };
+            mainStreamState[matchId] = saved.mainStream || { iframeUrl: saved.iframeUrl || '', externalUrl: saved.externalUrl || '', hlsUrl: saved.hlsUrl || '' };
+            if (!mainStreamState[matchId].hlsUrl) mainStreamState[matchId].hlsUrl = '';
             if (saved.zones && Array.isArray(saved.zones)) {
                 zonesState[matchId] = JSON.parse(JSON.stringify(saved.zones));
             } else {
                 zonesState[matchId] = [];
             }
         } else {
-            mainStreamState[matchId] = { iframeUrl: '', externalUrl: '' };
+            mainStreamState[matchId] = { iframeUrl: '', externalUrl: '', hlsUrl: '' };
             zonesState[matchId] = [];
         }
     }
@@ -399,7 +400,7 @@ function buildMatchCard(m) {
                     <div class="match-meta-sm">
                         ${escHtml(m.league||'')} • ${dateLabel}${m.time?' • '+m.time:''}
                         ${m.isLive ? '<span class="badge-live">🔴 مباشر</span>' : ''}
-                        <span class="badge-zones ${hasStream ? 'visible' : ''}" id="zbadge-${id}">
+                        <span class="badge-zones ${(mainStream.iframeUrl || mainStream.externalUrl || mainStream.hlsUrl || savedZones.length) ? 'visible' : ''}" id="zbadge-${id}">
                             📺 ${mainStream.iframeUrl || mainStream.externalUrl ? 'بث رئيسي + ' : ''}${savedZones.length} أهداف
                         </span>
                         <span class="badge-zones" id="vbadge-${id}" style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.35); color: var(--success); display: none; align-items: center; gap: 4px;">
@@ -418,6 +419,10 @@ function buildMatchCard(m) {
                     📡 البث المباشر الرئيسي للمباراة
                 </h4>
                 
+                <label class="form-label">📡 رابط بث HLS المباشر (.m3u8)</label>
+                <input class="form-input" id="main-hls-${id}" value="${escHtml(mainStream.hlsUrl||'')}" placeholder="https://stream.example.com/live/main.m3u8">
+                <p class="form-hint">الصق رابط بث HLS المباشر (ينتهي بـ .m3u8) — مثل روابط Gumlet أو أي CDN بث مباشر</p>
+
                 <label class="form-label">🔗 رابط إيفريم البث الرئيسي (iframe src)</label>
                 <input class="form-input" id="main-ifr-${id}" value="${escHtml(mainStream.iframeUrl)}" placeholder="https://player.twitch.tv/?channel=...&parent=localhost">
                 <p class="form-hint">الصق رابط بث الماتش المباشر (مثل Twitch أو YouTube أو أي iframe خارجي)</p>
@@ -426,7 +431,7 @@ function buildMatchCard(m) {
                 <input class="form-input" id="main-ext-${id}" value="${escHtml(mainStream.externalUrl)}" placeholder="https://...">
                 <p class="form-hint">رابط موقع البث الرئيسي لفتحه في نافذة جديدة كبديل</p>
                 
-                ${mainStream.iframeUrl ? `<button onclick="previewZone('${escHtml(mainStream.iframeUrl)}')" style="background:rgba(27,117,240,0.1);border:1px solid rgba(27,117,240,0.25);color:var(--primary);border-radius:8px;padding:6px 14px;cursor:pointer;font-family:Cairo,sans-serif;font-size:0.8rem">👁️ معاينة البث الرئيسي</button>` : ''}
+                ${(mainStream.hlsUrl || mainStream.iframeUrl) ? `<button onclick="previewZone('${escHtml(mainStream.hlsUrl || mainStream.iframeUrl)}')" style="background:rgba(27,117,240,0.1);border:1px solid rgba(27,117,240,0.25);color:var(--primary);border-radius:8px;padding:6px 14px;cursor:pointer;font-family:Cairo,sans-serif;font-size:0.8rem">👁️ معاينة البث الرئيسي</button>` : ''}
             </div>
 
             <!-- 2. GOALS & ATTACKS SECTION -->
@@ -523,12 +528,13 @@ function readZonesFromDOM(matchId) {
 // ─── API ─────────────────────────────────────────────
 async function saveStream(matchId, homeTeam, awayTeam) {
     const mainStream = {
+        hlsUrl:      document.getElementById(`main-hls-${matchId}`)?.value.trim() || '',
         iframeUrl:   document.getElementById(`main-ifr-${matchId}`)?.value.trim() || '',
         externalUrl: document.getElementById(`main-ext-${matchId}`)?.value.trim() || ''
     };
     const zones = readZonesFromDOM(matchId);
     
-    if (!mainStream.iframeUrl && !mainStream.externalUrl && !zones.length) {
+    if (!mainStream.hlsUrl && !mainStream.iframeUrl && !mainStream.externalUrl && !zones.length) {
         showToast('⚠️ أدخل رابط البث المباشر أو أضف لقطة/هدف على الأقل', 'error');
         return;
     }
@@ -616,6 +622,39 @@ function previewZone(url) {
                 <p>تمنع منصة X تشغيل البث المباشر المدمج (iframe). يمكنك فتح الرابط مباشرة:</p>
                 <a href="${url}" target="_blank" style="display:inline-block; margin-top:1.5rem; background:var(--primary); color:#fff; padding:10px 20px; border-radius:8px; text-decoration:none; font-weight:700;">🌐 فتح الرابط في نافذة جديدة</a>
             </div>`;
+        }
+    } else if (url.includes('.m3u8') || url.includes('m3u8')) {
+        // HLS stream — use hls.js
+        bodyContainer.innerHTML = `
+        <div style="width:100%; height:100%; min-height:450px; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#000;">
+            <video id="hlsPreviewVideo" controls autoplay style="width:100%; max-height:500px; background:#000;"></video>
+            <p style="margin-top:0.75rem; font-size:0.8rem; color:var(--text-dim);">🎬 بث HLS مباشر — ${url}</p>
+        </div>`;
+        const video = document.getElementById('hlsPreviewVideo');
+        const loadHls = () => {
+            if (Hls.isSupported()) {
+                const hls = new Hls();
+                hls.loadSource(url);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(()=>{}));
+                hls.on(Hls.Events.ERROR, (_, data) => {
+                    if (data.fatal) bodyContainer.querySelector('p').textContent = '❌ تعذّر تحميل البث: ' + (data.details||'');
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = url;
+                video.play().catch(()=>{});
+            } else {
+                bodyContainer.innerHTML = `<div style="padding:2rem;text-align:center;color:var(--text-dim);">⚠️ المتصفح لا يدعم بث HLS مباشرة. ابدأ بتثبيت إضافة HLS أو استخدم Safari.</div>`;
+            }
+        };
+        if (window.Hls) {
+            loadHls();
+        } else {
+            const s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js';
+            s.onload = loadHls;
+            s.onerror = () => { bodyContainer.innerHTML = `<div style="padding:2rem;text-align:center;color:var(--text-dim);">❌ تعذّر تحميل مشغّل HLS</div>`; };
+            document.head.appendChild(s);
         }
     } else {
         bodyContainer.innerHTML = `<iframe id="previewIframe" src="${url}" allow="autoplay; fullscreen; picture-in-picture" style="width:100%; height:100%; min-height:450px; border:none;"></iframe>`;
