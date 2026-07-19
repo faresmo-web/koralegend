@@ -401,6 +401,12 @@ async function fetchMatchesYSScores(dateStr = 'today') {
 
 // ── ESPN API for date-based matches (FALLBACK) ────────────────
 const ESPN_LEAGUES = [
+    // International — most important (World Cup 2026 is active now!)
+    { id: 'fifa.world',     name: 'كأس العالم 2026',             country: 'دولي' },
+    { id: 'uefa.nations',   name: 'دوري الأمم الأوروبية',        country: 'أوروبا' },
+    { id: 'concacaf.nations.league', name: 'دوري أمم الكونكاكاف', country: 'دولي' },
+    { id: 'conmebol.copa',  name: 'كوبا أمريكا',                 country: 'دولي' },
+    { id: 'conmebol.world', name: 'تصفيات كأس العالم - كونميبول', country: 'دولي' },
     // Europe
     { id: 'eng.1',          name: 'الدوري الإنجليزي الممتاز',   country: 'إنجلترا' },
     { id: 'esp.1',          name: 'الدوري الإسباني',             country: 'إسبانيا' },
@@ -415,15 +421,10 @@ const ESPN_LEAGUES = [
     { id: 'uefa.europa.conf', name: 'دوري المؤتمر الأوروبي',    country: 'أوروبا' },
     // Arab
     { id: 'sau.1',          name: 'دوري روشن السعودي',           country: 'السعودية' },
-    { id: 'egy.1',          name: 'الدوري المصري الممتاز',       country: 'مصر' },
     { id: 'uae.league',     name: 'دوري الخليج العربي',          country: 'الإمارات' },
+    { id: 'uae.1',          name: 'دوري ADNOC الإماراتي',        country: 'الإمارات' },
     { id: 'qat.1',          name: 'دوري نجوم قطر',               country: 'قطر' },
     { id: 'mar.1',          name: 'البطولة المغربية',             country: 'المغرب' },
-    // International
-    { id: 'fifa.worldcup',  name: 'كأس العالم',                  country: 'دولي' },
-    { id: 'concacaf.nations.league', name: 'دوري أمم الكونكاكاف', country: 'دولي' },
-    { id: 'conmebol.copa',  name: 'كوبا أمريكا',                 country: 'دولي' },
-    { id: 'uefa.nations',   name: 'دوري الأمم الأوروبية',        country: 'أوروبا' },
 ];
 
 const ESPN_HEADERS = {
