@@ -1,1 +1,13 @@
-{}
+{
+  "4653858": {
+    "mainStream": {
+      "hlsUrl": "",
+      "iframeUrl": "https://stream.gumlet.io/6a5d0ca29c3fca7761fb7296/6a5d0cfbaf8068270279be49/main.m3u8",
+      "externalUrl": ""
+    },
+    "zones": [],
+    "homeTeam": "إسبانيا",
+    "awayTeam": "الأرجنتين",
+    "updatedAt": "2026-07-19T20:03:31.006Z"
+  }
+}

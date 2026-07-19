@@ -141,7 +141,7 @@ async function loadAndRenderStream(matchId) {
         if (!tabBtn || !container || !stream) return;
 
         // Check if there is anything to show
-        const hasMain  = stream.mainStream && (stream.mainStream.iframeUrl || stream.mainStream.externalUrl);
+        const hasMain  = stream.mainStream && (stream.mainStream.hlsUrl || stream.mainStream.iframeUrl || stream.mainStream.externalUrl);
         const hasZones = Array.isArray(stream.zones) && stream.zones.length > 0;
         const hasFallback = !hasMain && (stream.iframeUrl || stream.externalUrl);
 
@@ -265,12 +265,16 @@ function setupHlsPlayer(video, targetUrl) {
 
 // Renders the MAIN broadcast in mainStreamContainer
 function renderMainStream(container, mainStream) {
-    const targetUrl = mainStream.iframeUrl || mainStream.externalUrl || '';
+    // Priority: hlsUrl > iframeUrl > externalUrl
+    const hlsUrl    = mainStream.hlsUrl    || '';
+    const iframeUrl = mainStream.iframeUrl || '';
+    const extUrl    = mainStream.externalUrl || '';
+    const targetUrl = hlsUrl || iframeUrl || extUrl;
 
     let bodyHtml = '';
     if (!targetUrl) return;
 
-    const isM3u8 = isM3u8Url(targetUrl);
+    const isM3u8 = hlsUrl ? true : isM3u8Url(targetUrl);
 
     if (isTwitterUrl(targetUrl)) {
         const tweetId = extractTweetId(targetUrl);
@@ -300,10 +304,11 @@ function renderMainStream(container, mainStream) {
         setTimeout(() => {
             const video = document.getElementById('mainStreamVideo');
             if (!video) return;
-            setupHlsPlayer(video, targetUrl);
+            // Use hlsUrl directly if available, otherwise targetUrl (e.g. old m3u8 in iframeUrl)
+            setupHlsPlayer(video, hlsUrl || targetUrl);
         }, 50);
-    } else if (mainStream.iframeUrl) {
-        const finalUrl = fixTwitchUrl(mainStream.iframeUrl);
+    } else if (iframeUrl) {
+        const finalUrl = fixTwitchUrl(iframeUrl);
         bodyHtml = `
         <div class="stream-iframe-wrap">
             <iframe id="mainStreamIframe"
@@ -320,10 +325,10 @@ function renderMainStream(container, mainStream) {
         </div>`;
     }
 
-    const fullscreenBtn = (mainStream.iframeUrl || isM3u8) && !isTwitterUrl(targetUrl)
+    const fullscreenBtn = (iframeUrl || isM3u8) && !isTwitterUrl(targetUrl)
         ? `<button class="btn-fullscreen" onclick="document.getElementById('${isM3u8 ? 'mainStreamVideo' : 'mainStreamIframe'}')?.requestFullscreen()">□ ملء الشاشة</button>` : '';
-    const extBtn = mainStream.externalUrl
-        ? `<a class="btn-stream-ext" href="${mainStream.externalUrl}" target="_blank" rel="noopener">🌐 نافذة جديدة</a>` : '';
+    const extBtn = extUrl
+        ? `<a class="btn-stream-ext" href="${extUrl}" target="_blank" rel="noopener">🌐 نافذة جديدة</a>` : '';
 
     container.innerHTML = `
     <div class="stream-card">

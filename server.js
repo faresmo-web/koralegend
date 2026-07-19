@@ -187,7 +187,7 @@ async function handleAdminUpsertStream(req, res) {
         if (!matchId) return sendError(res, 400, 'matchId required');
         const streams = loadStreams();
         streams[matchId] = {
-            mainStream:   body.mainStream || { iframeUrl: '', externalUrl: '' },
+            mainStream:   body.mainStream || { hlsUrl: '', iframeUrl: '', externalUrl: '' },
             zones:        Array.isArray(body.zones) ? body.zones : [], // highlights/goals
             homeTeam:     body.homeTeam  || '',
             awayTeam:     body.awayTeam  || '',
