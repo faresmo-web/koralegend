@@ -229,6 +229,27 @@ function isM3u8Url(url) {
     return url.split('?')[0].endsWith('.m3u8') || url.includes('.m3u8?');
 }
 
+// ─── Gumlet helpers ─────────────────────────────────────────────
+// Detects stream.gumlet.io HLS URLs (which block cross-origin XHR)
+function isGumletUrl(url) {
+    if (!url) return false;
+    return url.includes('stream.gumlet.io') || url.includes('play.gumlet.io');
+}
+
+// Converts  https://stream.gumlet.io/{col}/{assetId}/main.m3u8
+// →         https://play.gumlet.io/embed/{assetId}
+function gumletToEmbedUrl(url) {
+    try {
+        const u = new URL(url);
+        // Path: /{collectionId}/{assetId}/main.m3u8  →  parts[2] = assetId
+        const parts = u.pathname.replace(/^\//, '').split('/');
+        const assetId = parts[1] || parts[0];
+        return `https://play.gumlet.io/embed/${assetId}`;
+    } catch (_) {
+        return url;
+    }
+}
+
 function setupHlsPlayer(video, targetUrl) {
     const playHls = () => {
         if (window.Hls && window.Hls.isSupported()) {
@@ -297,16 +318,29 @@ function renderMainStream(container, mainStream) {
             bodyHtml = `<div class="stream-notice"><div class="notice-icon">🐦</div><p style="font-size:1rem;font-weight:700;color:var(--text-primary)">البث موجود على X</p><a href="${targetUrl}" target="_blank" rel="noopener" class="btn-stream-ext" style="margin-top:1rem;display:inline-flex">🌐 افتحه في نافذة جديدة</a></div>`;
         }
     } else if (isM3u8) {
-        bodyHtml = `
-        <div class="stream-video-wrap" style="width: 100%; background: #000; border-radius: 12px; overflow: hidden; position: relative;">
-            <video id="mainStreamVideo" controls autoplay playsinline style="width:100%; display:block; aspect-ratio: 16/9; max-height: 480px;"></video>
-        </div>`;
-        setTimeout(() => {
-            const video = document.getElementById('mainStreamVideo');
-            if (!video) return;
-            // Use hlsUrl directly if available, otherwise targetUrl (e.g. old m3u8 in iframeUrl)
-            setupHlsPlayer(video, hlsUrl || targetUrl);
-        }, 50);
+        // ── Gumlet: convert to embed iframe (avoids CORS) ──
+        if (isGumletUrl(hlsUrl || targetUrl)) {
+            const embedUrl = gumletToEmbedUrl(hlsUrl || targetUrl);
+            bodyHtml = `
+            <div class="stream-iframe-wrap">
+                <iframe id="mainStreamIframe"
+                    src="${embedUrl}"
+                    allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                    allowfullscreen
+                ></iframe>
+            </div>`;
+        } else {
+            // Generic HLS — use hls.js
+            bodyHtml = `
+            <div class="stream-video-wrap" style="width: 100%; background: #000; border-radius: 12px; overflow: hidden; position: relative;">
+                <video id="mainStreamVideo" controls autoplay playsinline style="width:100%; display:block; aspect-ratio: 16/9; max-height: 480px;"></video>
+            </div>`;
+            setTimeout(() => {
+                const video = document.getElementById('mainStreamVideo');
+                if (!video) return;
+                setupHlsPlayer(video, hlsUrl || targetUrl);
+            }, 50);
+        }
     } else if (iframeUrl) {
         const finalUrl = fixTwitchUrl(iframeUrl);
         bodyHtml = `
