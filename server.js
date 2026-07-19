@@ -1544,6 +1544,44 @@ async function handleStreamProxy(req, res) {
 
         // Copy content type from origin response or fallback to m3u8 content type
         const contentType = response.headers['content-type'] || 'application/x-mpegURL';
+        let responseData = response.data;
+
+        const isM3u8 = streamUrl.toLowerCase().includes('.m3u8') || 
+                       contentType.toLowerCase().includes('mpegurl') || 
+                       contentType.toLowerCase().includes('x-mpegurl');
+
+        if (isM3u8) {
+            const bodyStr = responseData.toString('utf8');
+            const lines = bodyStr.split(/\r?\n/);
+            const rewrittenLines = lines.map(line => {
+                const trimmed = line.trim();
+                if (!trimmed) return line;
+
+                // Handle tags with URIs (like EXT-X-KEY, EXT-X-MEDIA, etc.)
+                if (trimmed.startsWith('#')) {
+                    if (trimmed.includes('URI=')) {
+                        return trimmed.replace(/URI="([^"]+)"/g, (match, p1) => {
+                            try {
+                                const absolute = new URL(p1, streamUrl).toString();
+                                return `URI="/api/stream-proxy?url=${encodeURIComponent(absolute)}"`;
+                            } catch (_) {
+                                return match;
+                            }
+                        });
+                    }
+                    return line;
+                }
+
+                // Handle media segment or sub-playlist URL
+                try {
+                    const absolute = new URL(trimmed, streamUrl).toString();
+                    return `/api/stream-proxy?url=${encodeURIComponent(absolute)}`;
+                } catch (_) {
+                    return line;
+                }
+            });
+            responseData = Buffer.from(rewrittenLines.join('\n'), 'utf8');
+        }
 
         res.writeHead(200, {
             'Content-Type': contentType,
@@ -1551,7 +1589,7 @@ async function handleStreamProxy(req, res) {
             'Access-Control-Allow-Methods': 'GET, OPTIONS',
             'Cache-Control': 'no-cache'
         });
-        res.end(response.data);
+        res.end(responseData);
     } catch (e) {
         res.writeHead(500, { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' });
         res.end(`Proxy Error: ${e.message}`);
