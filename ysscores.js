@@ -60,29 +60,11 @@ async function setTimezoneKSA() {
     try {
         // Try multiple known timezone endpoints for ysscores
         const tzUrls = [
-<<<<<<< HEAD
-            `${BASE_URL}/change_zone/3`,
-=======
             `${BASE_URL}/change_zone/3`,         // UTC+3 (most likely pattern)
->>>>>>> 7447a5f8ada524f482ca7c3033488aa057d0cf96
             `${BASE_URL.replace('/ar', '')}/change_zone/3`,
             `${BASE_URL}/change_timezone/ksa`,
             `${BASE_URL.replace('/ar', '')}/change_timezone/ksa`,
         ];
-<<<<<<< HEAD
-        for (const tzUrl of tzUrls) {
-            try {
-                await axios.get(tzUrl, {
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                        'Cookie': sessionCookie,
-                        'Referer': `${BASE_URL}/index`,
-                        'Accept': 'application/json, text/javascript, */*',
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
-                    timeout: 8000,
-                });
-=======
 
         for (const tzUrl of tzUrls) {
             try {
@@ -97,7 +79,7 @@ async function setTimezoneKSA() {
                 if (xsrfToken) tzHeaders['X-XSRF-TOKEN'] = xsrfToken;
 
                 await axios.get(tzUrl, { headers: tzHeaders, timeout: 6000 });
->>>>>>> 7447a5f8ada524f482ca7c3033488aa057d0cf96
+
                 timezoneSet = true;
                 console.log(`[ysscores] Timezone set via: ${tzUrl}`);
                 return;
@@ -112,30 +94,6 @@ async function setTimezoneKSA() {
 }
 
 /**
-<<<<<<< HEAD
- * If ysscores timezone was not set to Cairo, times come in UTC.
- * This adds +3h to fix the Arabic time string.
- */
-function adjustTimeIfUTC(timeStr) {
-    if (timezoneSet || !timeStr) return timeStr;
-    const m = timeStr.trim().match(/^(\d{1,2}):(\d{2})\s*([صم])$/);
-    if (!m) return timeStr;
-    let hours = parseInt(m[1]);
-    const mins = parseInt(m[2]);
-    const ampm = m[3];
-    if (ampm === 'ص') { if (hours === 12) hours = 0; }
-    else               { if (hours !== 12) hours += 12; }
-    hours = (hours + 3) % 24;
-    const newAmpm = hours < 12 ? 'ص' : 'م';
-    let displayH = hours % 12;
-    if (displayH === 0) displayH = 12;
-    return `${String(displayH).padStart(2, '0')}:${String(mins).padStart(2, '0')} ${newAmpm}`;
-}
-
-async function fetchMatchesForDate(dateStr, dateLabel) {
-    await ensureSession();
-    if (!sessionToken) throw new Error('No ysscores session token available');
-=======
  * If the ysscores session timezone could not be set to Cairo (UTC+3),
  * the site returns match times in UTC. This function detects that and
  * adds 3 hours to the Arabic time string so it displays correctly.
@@ -145,7 +103,6 @@ async function fetchMatchesForDate(dateStr, dateLabel) {
  */
 function adjustTimeIfUTC(timeStr) {
     if (timezoneSet || !timeStr) return timeStr; // timezone was set correctly, no adjustment needed
->>>>>>> 7447a5f8ada524f482ca7c3033488aa057d0cf96
 
     // Match Arabic time: "10:30 م" or "09:00 ص"
     const m = timeStr.trim().match(/^(\d{1,2}):(\d{2})\s*([صم])$/);
@@ -158,7 +115,7 @@ function adjustTimeIfUTC(timeStr) {
     // Convert Arabic 12h to 24h
     if (ampm === 'ص') { // AM
         if (hours === 12) hours = 0;
-    } else {              // PMم
+    } else {              // PM
         if (hours !== 12) hours += 12;
     }
 

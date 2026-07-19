@@ -318,29 +318,20 @@ function renderMainStream(container, mainStream) {
             bodyHtml = `<div class="stream-notice"><div class="notice-icon">🐦</div><p style="font-size:1rem;font-weight:700;color:var(--text-primary)">البث موجود على X</p><a href="${targetUrl}" target="_blank" rel="noopener" class="btn-stream-ext" style="margin-top:1rem;display:inline-flex">🌐 افتحه في نافذة جديدة</a></div>`;
         }
     } else if (isM3u8) {
-        // ── Gumlet: convert to embed iframe (avoids CORS) ──
-        if (isGumletUrl(hlsUrl || targetUrl)) {
-            const embedUrl = gumletToEmbedUrl(hlsUrl || targetUrl);
-            bodyHtml = `
-            <div class="stream-iframe-wrap">
-                <iframe id="mainStreamIframe"
-                    src="${embedUrl}"
-                    allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-                    allowfullscreen
-                ></iframe>
-            </div>`;
-        } else {
-            // Generic HLS — use hls.js
-            bodyHtml = `
-            <div class="stream-video-wrap" style="width: 100%; background: #000; border-radius: 12px; overflow: hidden; position: relative;">
-                <video id="mainStreamVideo" controls autoplay playsinline style="width:100%; display:block; aspect-ratio: 16/9; max-height: 480px;"></video>
-            </div>`;
-            setTimeout(() => {
-                const video = document.getElementById('mainStreamVideo');
-                if (!video) return;
-                setupHlsPlayer(video, hlsUrl || targetUrl);
-            }, 50);
+        let playUrl = hlsUrl || targetUrl;
+        if (isGumletUrl(playUrl)) {
+            // Pass Gumlet URLs through the stream proxy to bypass CORS
+            playUrl = `/api/stream-proxy?url=${encodeURIComponent(playUrl)}`;
         }
+        bodyHtml = `
+        <div class="stream-video-wrap" style="width: 100%; background: #000; border-radius: 12px; overflow: hidden; position: relative;">
+            <video id="mainStreamVideo" controls autoplay playsinline style="width:100%; display:block; aspect-ratio: 16/9; max-height: 480px;"></video>
+        </div>`;
+        setTimeout(() => {
+            const video = document.getElementById('mainStreamVideo');
+            if (!video) return;
+            setupHlsPlayer(video, playUrl);
+        }, 50);
     } else if (iframeUrl) {
         const finalUrl = fixTwitchUrl(iframeUrl);
         bodyHtml = `

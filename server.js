@@ -1523,6 +1523,41 @@ function startPushDaemon(intervalMs = 60_000) {
     });
 }
 
+// ── Stream Proxy ─────────────────────────────────────────────
+async function handleStreamProxy(req, res) {
+    const urlObj = new URL(req.url, 'http://localhost');
+    const streamUrl = urlObj.searchParams.get('url');
+
+    if (!streamUrl) {
+        res.writeHead(400, { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' });
+        return res.end('URL parameter required');
+    }
+
+    try {
+        const response = await axios.get(streamUrl, {
+            responseType: 'arraybuffer',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+            },
+            timeout: 10000
+        });
+
+        // Copy content type from origin response or fallback to m3u8 content type
+        const contentType = response.headers['content-type'] || 'application/x-mpegURL';
+
+        res.writeHead(200, {
+            'Content-Type': contentType,
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, OPTIONS',
+            'Cache-Control': 'no-cache'
+        });
+        res.end(response.data);
+    } catch (e) {
+        res.writeHead(500, { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' });
+        res.end(`Proxy Error: ${e.message}`);
+    }
+}
+
 // ── Main server ──────────────────────────────────────────────
 const server = http.createServer((req, res) => {
     const url = req.url.split('?')[0];
@@ -1557,6 +1592,7 @@ const server = http.createServer((req, res) => {
         return;
     }
     // ── Streams API ──
+    if (url === '/api/stream-proxy')      return handleStreamProxy(req, res);
     if (url === '/api/streams')           return handleGetStream(req, res);
     if (url === '/api/streams/heartbeat') return handleStreamHeartbeat(req, res);
     if (url === '/api/admin/login' && req.method === 'POST') return handleAdminLogin(req, res);
