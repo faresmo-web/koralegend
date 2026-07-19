@@ -70,27 +70,54 @@ let matchesCache   = null;   // { en: {today,yesterday,tomorrow}, ar: {...} }
 let lastFetchTime  = 0;
 const CACHE_TTL_MS = 60 * 1000; // 60 seconds
 
+// ── Cairo-aware date string helper ──────────────────────────
+function cairoDayStr(offsetDays = 0) {
+    const d = new Date();
+    if (offsetDays !== 0) d.setDate(d.getDate() + offsetDays);
+    return d.toLocaleDateString('en-CA', { timeZone: TIMEZONE }); // YYYY-MM-DD in Cairo TZ
+}
+
 async function refreshMatches() {
     const now = Date.now();
     if (matchesCache && (now - lastFetchTime) < CACHE_TTL_MS) return matchesCache;
 
     console.log(`[${new Date().toLocaleTimeString('ar-EG', { timeZone: TIMEZONE })}] 🔄 Fetching fresh data from ysscores...`);
 
-    const today     = new Date();
-    const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
-    const tomorrow  = new Date(today); tomorrow.setDate(today.getDate() + 1);
-    const fmt = d => d.toISOString().split('T')[0];
+    // Use Cairo-aware dates — avoids UTC offset bug that shifts day at 22:00 local time
+    const todayStr     = cairoDayStr(0);
+    const yesterdayStr = cairoDayStr(-1);
+    const tomorrowStr  = cairoDayStr(1);
 
     const [yd, td, tm] = await Promise.all([
-        ysscores.fetchMatchesForDate(fmt(yesterday), 'yesterday'),
-        ysscores.fetchMatchesForDate(fmt(today), 'today'),
-        ysscores.fetchMatchesForDate(fmt(tomorrow), 'tomorrow'),
+        ysscores.fetchMatchesForDate(yesterdayStr, 'yesterday'),
+        ysscores.fetchMatchesForDate(todayStr,     'today'),
+        ysscores.fetchMatchesForDate(tomorrowStr,  'tomorrow'),
     ]);
 
+    // ── Midnight live-match fix ────────────────────────────────
+    // After midnight Cairo time, live matches from "yesterday" may still be running.
+    // Merge them into today's list so they don't disappear.
+    const cairoHour = parseInt(
+        new Date().toLocaleTimeString('en-CA', { timeZone: TIMEZONE, hour: '2-digit', hour12: false })
+    );
+    let todayFinal = td;
+    if (cairoHour < 4) {
+        const stillLive = yd.filter(m => m.isLive);
+        if (stillLive.length > 0) {
+            const existingIds = new Set(td.map(m => m.id));
+            const merged = [...td];
+            for (const m of stillLive) {
+                if (!existingIds.has(m.id)) merged.push(m);
+            }
+            todayFinal = merged;
+            console.log(`  ⏰ [midnight-fix] Merged ${stillLive.length} still-live match(es) from yesterday into today`);
+        }
+    }
+
     matchesCache = {
-        en: { today: td, yesterday: yd, tomorrow: tm },
+        en: { today: todayFinal, yesterday: yd, tomorrow: tm },
         ar: {
-            today:     td.map(m => ({ ...m, status: m.statusAr })),
+            today:     todayFinal.map(m => ({ ...m, status: m.statusAr })),
             yesterday: yd.map(m => ({ ...m, status: m.statusAr })),
             tomorrow:  tm.map(m => ({ ...m, status: 'قادمة' })),
         },
@@ -98,8 +125,8 @@ async function refreshMatches() {
     };
     lastFetchTime = now;
 
-    const liveCount = td.filter(m => m.isLive).length;
-    console.log(`  ✓ Today: ${td.length} matches (${liveCount} live) | Yesterday: ${yd.length} | Tomorrow: ${tm.length}`);
+    const liveCount = todayFinal.filter(m => m.isLive).length;
+    console.log(`  ✓ Today: ${todayFinal.length} matches (${liveCount} live) | Yesterday: ${yd.length} | Tomorrow: ${tm.length}`);
     return matchesCache;
 }
 

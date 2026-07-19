@@ -39,23 +39,56 @@ async function ensureSession() {
 async function setTimezoneKSA() {
     if (timezoneSet || !sessionToken) return;
     try {
-        // ysscores uses /change_timezone/ksa to set KSA/Cairo (UTC+3) timezone
-        const tzUrl = `${BASE_URL.replace('/ar', '')}/change_timezone/ksa`;
-        await axios.get(tzUrl, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                'Cookie': sessionCookie,
-                'Referer': `${BASE_URL}/index`,
-                'Accept': 'application/json, text/javascript, */*',
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-            timeout: 8000,
-        });
-        timezoneSet = true;
-        console.log('[ysscores] Timezone set to KSA/Cairo (UTC+3)');
+        // Try multiple known timezone endpoints for ysscores
+        const tzUrls = [
+            `${BASE_URL}/change_zone/3`,
+            `${BASE_URL.replace('/ar', '')}/change_zone/3`,
+            `${BASE_URL}/change_timezone/ksa`,
+            `${BASE_URL.replace('/ar', '')}/change_timezone/ksa`,
+        ];
+        for (const tzUrl of tzUrls) {
+            try {
+                await axios.get(tzUrl, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                        'Cookie': sessionCookie,
+                        'Referer': `${BASE_URL}/index`,
+                        'Accept': 'application/json, text/javascript, */*',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    timeout: 8000,
+                });
+                timezoneSet = true;
+                console.log(`[ysscores] Timezone set via: ${tzUrl}`);
+                return;
+            } catch (innerE) {
+                // try next URL
+            }
+        }
+        console.warn('[ysscores] All timezone URLs failed — will apply +3h offset manually to match times');
     } catch (e) {
         console.warn('[ysscores] Could not set timezone:', e.message);
     }
+}
+
+/**
+ * If ysscores timezone was not set to Cairo, times come in UTC.
+ * This adds +3h to fix the Arabic time string.
+ */
+function adjustTimeIfUTC(timeStr) {
+    if (timezoneSet || !timeStr) return timeStr;
+    const m = timeStr.trim().match(/^(\d{1,2}):(\d{2})\s*([صم])$/);
+    if (!m) return timeStr;
+    let hours = parseInt(m[1]);
+    const mins = parseInt(m[2]);
+    const ampm = m[3];
+    if (ampm === 'ص') { if (hours === 12) hours = 0; }
+    else               { if (hours !== 12) hours += 12; }
+    hours = (hours + 3) % 24;
+    const newAmpm = hours < 12 ? 'ص' : 'م';
+    let displayH = hours % 12;
+    if (displayH === 0) displayH = 12;
+    return `${String(displayH).padStart(2, '0')}:${String(mins).padStart(2, '0')} ${newAmpm}`;
 }
 
 async function fetchMatchesForDate(dateStr, dateLabel) {
@@ -121,6 +154,9 @@ async function fetchMatchesForDate(dateStr, dateLabel) {
             if (time.includes('-') && time.match(/\d+/)) {
                 time = '';
             }
+
+            // If ysscores timezone was not set to Cairo, correct the time by adding +3h
+            time = adjustTimeIfUTC(time);
 
             // homeScore / awayScore
             let homeScore = null;

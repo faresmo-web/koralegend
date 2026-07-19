@@ -10,6 +10,7 @@
 const http      = require('http');
 const fs        = require('fs');
 const path      = require('path');
+const crypto    = require('crypto');
 const axios     = require('axios');
 const webPush   = require('web-push');
 const ysscores  = require('./ysscores');
@@ -28,7 +29,12 @@ const HEADERS  = {
 
 // ── Streams (Admin) Setup ────────────────────────────────────
 const STREAMS_FILE   = path.join(__dirname, 'streams.json');
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'kora2024';
+
+if (ADMIN_PASSWORD === 'kora2024') {
+    console.warn('\x1b[33m%s\x1b[0m', '⚠️ WARNING: You are using the default ADMIN_PASSWORD ("kora2024"). Please set a strong ADMIN_PASSWORD in environment variables in production!');
+}
 
 function loadStreams() {
     try {
@@ -43,9 +49,116 @@ function saveStreams(streams) {
     try { fs.writeFileSync(STREAMS_FILE, JSON.stringify(streams, null, 2), 'utf8'); } catch { }
 }
 
+// In-memory sessions store (token -> expiry timestamp)
+const sessions = new Map();
+
+// Parse cookies helper
+function parseCookies(req) {
+    const list = {};
+    const cookieHeader = req.headers.cookie;
+    if (!cookieHeader) return list;
+
+    cookieHeader.split(';').forEach(cookie => {
+        let [name, ...rest] = cookie.split('=');
+        name = name.trim();
+        if (!name) return;
+        const val = rest.join('=').trim();
+        list[name] = decodeURIComponent(val);
+    });
+
+    return list;
+}
+
 function checkAdminAuth(req) {
-    const authHeader = req.headers['x-admin-password'] || '';
-    return authHeader === ADMIN_PASSWORD;
+    const cookies = parseCookies(req);
+    const token = cookies['admin_session'] || '';
+    if (!token || !sessions.has(token)) return false;
+
+    const expiry = sessions.get(token);
+    if (Date.now() > expiry) {
+        sessions.delete(token); // expired
+        return false;
+    }
+    // Extend session (refresh expiry) on activity - 2 hours
+    sessions.set(token, Date.now() + 2 * 60 * 60 * 1000);
+    return true;
+}
+
+// Simple Rate Limiting for Login (IP -> { count, lockUntil })
+const loginLimits = new Map();
+
+function isLoginIpBlocked(ip) {
+    const limit = loginLimits.get(ip);
+    if (!limit) return false;
+    if (Date.now() < limit.lockUntil) return true;
+    // Lock expired, reset
+    loginLimits.delete(ip);
+    return false;
+}
+
+function recordLoginAttempt(ip, success) {
+    if (success) {
+        loginLimits.delete(ip);
+        return;
+    }
+    let limit = loginLimits.get(ip) || { count: 0, lockUntil: 0 };
+    limit.count++;
+    if (limit.count >= 5) {
+        limit.lockUntil = Date.now() + 15 * 60 * 1000; // 15 mins lock
+        console.warn(`🔒 IP ${ip} blocked for 15 minutes due to multiple login failures.`);
+    }
+    loginLimits.set(ip, limit);
+}
+
+function getClientIp(req) {
+    return req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
+}
+
+// POST /api/admin/login
+async function handleAdminLogin(req, res) {
+    const ip = getClientIp(req);
+    if (isLoginIpBlocked(ip)) {
+        return sendError(res, 429, 'محاولات كثيرة خاطئة. تم حظرك مؤقتاً لمدة 15 دقيقة.');
+    }
+
+    try {
+        const body = await readBody(req);
+        const user = body.username || '';
+        const pwd = body.password || '';
+        if (user === ADMIN_USERNAME && pwd === ADMIN_PASSWORD) {
+            // Success, create session
+            const token = crypto.randomBytes(32).toString('hex');
+            const expiry = Date.now() + 2 * 60 * 60 * 1000; // 2 hours
+            sessions.set(token, expiry);
+            recordLoginAttempt(ip, true);
+
+            // Set cookie: HttpOnly, Secure if on https, SameSite Strict, Path /
+            res.writeHead(200, {
+                'Content-Type': 'application/json',
+                'Set-Cookie': `admin_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=7200`
+            });
+            res.end(JSON.stringify({ ok: true }));
+        } else {
+            recordLoginAttempt(ip, false);
+            sendError(res, 401, 'كلمة السر غير صحيحة!');
+        }
+    } catch {
+        sendError(res, 400, 'Invalid JSON body');
+    }
+}
+
+// POST /api/admin/logout
+function handleAdminLogout(req, res) {
+    const cookies = parseCookies(req);
+    const token = cookies['admin_session'] || '';
+    if (token) sessions.delete(token);
+
+    // Expire the cookie
+    res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Set-Cookie': 'admin_session=; HttpOnly; SameSite=Strict; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT'
+    });
+    res.end(JSON.stringify({ ok: true }));
 }
 
 // GET  /api/streams?matchId=xxx  → public, returns stream for one match
@@ -889,13 +1002,13 @@ async function handleMatches(req, res) {
     // When requesting today's matches, check if we're in the first 3 hours of Cairo midnight.
     // If so, also fetch yesterday's matches and include any still-live ones.
     // This prevents live matches from disappearing when crossing midnight.
-    if (reqDate === 'today' || reqDate === 'YYYY-MM-DD') {
+    if (reqDate === 'today') {
         try {
             const cairoHour = parseInt(
                 new Date().toLocaleTimeString('en-CA', { timeZone: TIMEZONE, hour: '2-digit', hour12: false })
             );
-            // In first 3 hours after midnight, live matches may still be from "yesterday"
-            if (cairoHour < 3) {
+            // In first 4 hours after midnight, live matches may still be from "yesterday"
+            if (cairoHour < 4) {
                 const yesterdayMatches = await fetchMatchesYSScores('yesterday').catch(() => []);
                 const stillLive = yesterdayMatches.filter(m => m.isLive);
                 if (stillLive.length > 0) {
@@ -1176,6 +1289,14 @@ function serveStatic(req, res) {
     if (urlPath === '/' || urlPath === '') {
         fileToServe = path.join(__dirname, 'matches.html');
         ext = '.html';
+    } else if (urlPath === '/admin' || urlPath === '/admin.html') {
+        // Authenticate admin before serving admin.html
+        if (checkAdminAuth(req)) {
+            fileToServe = path.join(__dirname, 'admin.html');
+        } else {
+            fileToServe = path.join(__dirname, 'admin-login.html');
+        }
+        ext = '.html';
     } else {
         const diskPath = path.join(__dirname, urlPath);
         ext = path.extname(diskPath);
@@ -1437,6 +1558,8 @@ const server = http.createServer((req, res) => {
     // ── Streams API ──
     if (url === '/api/streams')           return handleGetStream(req, res);
     if (url === '/api/streams/heartbeat') return handleStreamHeartbeat(req, res);
+    if (url === '/api/admin/login' && req.method === 'POST') return handleAdminLogin(req, res);
+    if (url === '/api/admin/logout' && req.method === 'POST') return handleAdminLogout(req, res);
     if (url === '/api/admin/viewers')     return handleAdminGetViewers(req, res);
     if (url === '/api/admin/streams') {
         if (req.method === 'GET')    return handleAdminGetStreams(req, res);
